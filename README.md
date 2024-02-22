@@ -7,13 +7,13 @@ I have included a Dockerfile in the root directory that pulls the latest ruby im
 In the projects root directory:
 
 ```sh
-    $ sudo docker build -t ruby-gem-host .
+    sudo docker build -t ruby-gem-host .
 ```
 
 After the image build's successfully run docker compose to launch the three services.
 
 ```sh
-    $ sudo docker-compose up
+    sudo docker-compose up
 ```
 
 Visit:  
