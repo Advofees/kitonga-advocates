@@ -10,8 +10,11 @@ In the projects root directory:
     $ sudo docker build -t ruby-gem-host .
 ```
 
-After the image build's successfully run docker compose to launch
+After the image build's successfully run docker compose to launch the three services.
 
 ```sh
     $ sudo docker-compose up
 ```
+
+Visit:  
+[http://localhost:3000](http://localhost:3000)
