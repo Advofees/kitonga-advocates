@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  fee-api:
+    build: .
+    container_name: fee_rails_api
+    ports:
+      - "4000:4000"
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgres://advoc:advoc@postgres-db:5432/advoc
+    depends_on:
+      - postgres-db
+    networks:
+      - advoc_network
+
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres_fee_database
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_DB=advoc
+      - POSTGRES_USER=advoc
+      - POSTGRES_PASSWORD=advoc
+    volumes:
+      - /home/slade/Desktop/FEE/data/postgres:/var/lib
+    networks:
+      - advoc_network
+
+networks:
+  advoc_network: {}

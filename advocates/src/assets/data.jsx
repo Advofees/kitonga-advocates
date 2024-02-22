@@ -1,0 +1,53 @@
+import {
+  faBalanceScale,
+  faBoxArchive,
+  faBriefcase,
+  faFile,
+  faFileText,
+  faFolderOpen,
+  faGavel,
+  faHandshake,
+  faSearch,
+  faUndo,
+} from "@fortawesome/free-solid-svg-icons";
+
+export const paymentMethods = [
+  "Mpesa",
+  "Credit Card",
+  "Debit Card",
+  "PayPal",
+  "Stripe",
+  "Apple",
+  "Paypal",
+  "Google Pay",
+  "Bank Transfer",
+  "Cash on Delivery (COD)",
+  "Cryptocurrencies",
+  "Digital Wallets",
+  "Checks",
+  "Gift Cards",
+  "Mobile Billing",
+  "Installment Plans",
+  "Bank Transfers (ACH)",
+  "Wire Transfers",
+  "E-checks",
+  "Amazon Pay",
+  "Alipay",
+  "WeChat Pay",
+];
+export const paymentTypes = ["final", "deposit", "installment"];
+
+export const caseStates = [
+  { name: "Pre Filing", icon: faSearch },
+  { name: "Filing", icon: faFile },
+  { name: "Pleadings", icon: faFileText },
+  { name: "Discovery", icon: faFolderOpen },
+  { name: "Pre Trial Motions", icon: faGavel },
+  { name: "Trial", icon: faBalanceScale },
+  { name: "Verdict", icon: faGavel },
+  { name: "Appeal", icon: faUndo },
+  { name: "Enforcement", icon: faBriefcase },
+  { name: "Post Judgment Motions", icon: faGavel },
+  { name: "Settlement", icon: faHandshake },
+  { name: "Closed", icon: faBoxArchive },
+];

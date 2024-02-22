@@ -1,0 +1,75 @@
+/* @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;900&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400;1,500;1,700&display=swap"); */
+
+* {
+  box-sizing: border-box;
+  /* font-size: 1.3rem; */
+  font-weight: 400;
+  font-family: "Poppins", sans-serif;
+  font-family: "Roboto", sans-serif;
+}
+
+.r-to-l {
+  direction: rtl;
+}
+
+.l-to-r {
+  direction: ltr;
+}
+
+.scroll_y {
+  overflow-y: scroll;
+}
+
+.scroll_x {
+  overflow-x: scroll;
+  display: flex;
+}
+
+.scroll_y::-webkit-scrollbar,
+.scroll_x::-webkit-scrollbar {
+  background-color: transparent;
+  width: 5px;
+  height: 5px;
+}
+
+.scroll_y::-webkit-scrollbar-thumb,
+.scroll_x::-webkit-scrollbar-thumb {
+  background-color: #6b72805f;
+  border-radius: 10px;
+}
+
+.box_shadow {
+  box-shadow: 0.15em 0.15em 0.04em;
+}
+
+@keyframes play_image {
+  0% {
+    filter: blur(5px);
+  }
+
+  50% {
+    filter: blur(20px);
+  }
+
+  100% {
+    filter: blur(5px);
+  }
+}
+
+
+.play-image {
+  animation: 5s play_image ease-in infinite;
+}
+
+.line-shadow {
+  transition: 0.5s;
+  box-shadow: 0.04em .04em 0.3em rgba(202, 101, 38, 0.5), -0.04em 0.04em 0.3em rgba(146, 64, 14, 0.5);
+}
+.line-shadow-on-hover {
+  transition: 0.5s;
+}
+
+.line-shadow-on-hover:hover,
+.on-focus-shadow:focus {
+  box-shadow: 0.04em .04em 0.3em rgba(202, 101, 38, 0.5), -0.04em 0.04em 0.3em rgba(146, 64, 14, 0.5);
+}

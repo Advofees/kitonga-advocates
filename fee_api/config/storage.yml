@@ -1,0 +1,27 @@
+# Use local disk storage for development and testing
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+# Amazon S3 storage for production
+amazon:
+  service: S3
+  access_key_id: YOUR_AMAZON_ACCESS_KEY_ID
+  secret_access_key: YOUR_AMAZON_SECRET_ACCESS_KEY
+  region: YOUR_S3_REGION
+  bucket: YOUR_S3_BUCKET_NAME
+
+# DigitalOcean Spaces storage for production (similar to S3)
+digitalocean:
+  service: S3
+  access_key_id: YOUR_DIGITALOCEAN_ACCESS_KEY_ID
+  secret_access_key: YOUR_DIGITALOCEAN_SECRET_ACCESS_KEY
+  region: YOUR_SPACES_REGION
+  bucket: YOUR_SPACES_BUCKET_NAME
+
+# Microsoft Azure Blob Storage for production
+azure:
+  service: Azure
+  storage_account_name: YOUR_AZURE_STORAGE_ACCOUNT_NAME
+  storage_access_key: YOUR_AZURE_STORAGE_ACCESS_KEY
+  container: YOUR_AZURE_STORAGE_CONTAINER_NAME

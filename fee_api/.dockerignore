@@ -1,0 +1,17 @@
+# Exclude specific directories
+storage/
+public/
+tmp/
+test/
+log/
+vendor/
+
+# Exclude specific files
+
+
+# Exclude files with a specific extension
+*.log
+*.tmp
+
+# Exclude all files and directories starting with "temp"
+temp*/
