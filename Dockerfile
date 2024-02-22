@@ -8,7 +8,7 @@ RUN mkdir /app
 WORKDIR /app
 
 # Copy Gemfile
-COPY ../Gemfile .
+COPY fee_api/Gemfile .
 
 # Install dependencies
 RUN gem install bundler && \
