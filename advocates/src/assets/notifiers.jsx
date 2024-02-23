@@ -19,9 +19,7 @@ export const notifiers = {
       title: "Oops...",
       color: "red",
       background: "black",
-      text: message.message
-        ? message.error || message.message
-        : "An error occured!!",
+      text: message.error || message.message || "An error occured!!",
     });
   },
   httpSuccess: (message) => {

@@ -7,14 +7,14 @@ import { notifiers } from "../../assets/notifiers";
 import { utilityFunctions } from "../../assets/functions";
 import { InputGroup, ListGroup, ListGroupItem, Form } from "react-bootstrap";
 import { OptionSelection } from "./OptionSelection";
-
-// "Content-Type": "application/json",
+import { ThreeDots } from "react-loader-spinner";
 
 export default function EditModal({
+  disableEditing = false,
   dataEndpoint = "",
   icon = <FontAwesomeIcon icon={faFileEdit} />,
   anchorText = "Edit",
-  anchorClassName = "flex gap-2 items-center line-shadow rounded px-4 py-2 bg-gray-100 text-amber-800 hover:text-white hover:bg-amber-700 duration-200",
+  anchorClassName = "flex gap-2 items-center line-shadow rounded px-4 py-2 text-amber-800 hover:text-white hover:bg-amber-700 duration-200",
   description = "Edit",
   updateEndpoint = "",
   interceptUpdate,
@@ -34,7 +34,9 @@ export default function EditModal({
           Accept: "application/json",
           Authorization: "Bearer " + sessionStorage.getItem("token"),
         },
-        successCallback: setFormData,
+        successCallback: (res) => {
+          setFormData(res);
+        },
         errorCallback: (err) => {
           notifiers.httpError(err);
         },
@@ -85,11 +87,11 @@ export default function EditModal({
   return (
     <div className="">
       <ModalLink
+        disableAnchor={disableEditing}
         anchorClassName={anchorClassName}
         submitButtonClassName="ring-1 ring-green-600 text-green-600 hover:bg-green-600 hover:text-white rounded p-2"
         cancelButtonClassName="ring-1 ring-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white rounded p-2"
         anchorText={anchorText}
-        cancelText="Cancel"
         submitText="Save Changes"
         onInit={() => {
           setEndpoint(dataEndpoint);
@@ -111,9 +113,10 @@ export default function EditModal({
             [...displayFields, ...editableFields.map((f) => f.name)].find(
               (field) => formData[field] === undefined
             )
-          ) && (
+          ) &&
+          Object.keys(formData).length > 0 ? (
             <div className="grid gap-4">
-              <div className="grid gap-2 shadow-sm p-2 rounded bg-gray-100">
+              <div className="grid gap-2 shadow-sm p-2 rounded">
                 {displayFields.map((field, index) => (
                   <div className="" key={index}>
                     <div className=" text-amber-800 font-bold px-4 text-lg">
@@ -137,7 +140,7 @@ export default function EditModal({
                   ) : field.as === "textarea" ? (
                     <ListGroup key={index}>
                       <ListGroupItem>
-                        <span className="text-gray-900/50 font-bold px-4">
+                        <span className="font-bold px-4">
                           {utilityFunctions.snakeCaseToTitleCase(field.name)}
                         </span>
                       </ListGroupItem>
@@ -165,7 +168,7 @@ export default function EditModal({
                           direction: "rtl",
                         }}
                       >
-                        <span className="text-gray-900/50 font-bold">
+                        <span className="font-bold">
                           {utilityFunctions.snakeCaseToTitleCase(field.name)}
                         </span>
                       </InputGroup.Text>
@@ -181,6 +184,12 @@ export default function EditModal({
                     </InputGroup>
                   )
                 )}
+              </div>
+            </div>
+          ) : (
+            <div className="relative min-h-[10vh] flex justify-center items-center">
+              <div className="px-4 py-2 shadow-inner shadow-black rounded-lg">
+                <ThreeDots height={10} color="rgb(146 64 14)" />
               </div>
             </div>
           )

@@ -14,6 +14,9 @@ export const endpoints = {
   pagination: {
     getCases: `${baseUrl}/pages/cases/`,
     getClients: `${baseUrl}/pages/clients/`,
+    filter: {
+      filterCases: `${baseUrl}/filter/cases/<:q>/<:v>`
+    },
     search: {
       searchCases: `${baseUrl}/search/cases/<:q>/<:v>/`,
       searchClients: `${baseUrl}/search/clients/<:q>/<:v>/`,
@@ -23,6 +26,9 @@ export const endpoints = {
     filterCases: `${baseUrl}/filter/cases/<:criteria>`,
     filterClientCases: `${baseUrl}/filter_pages/cases/<:criteria>/<:response>`,
     filterClients: `${baseUrl}/filter/clients/<:criteria>`,
+    caseRangeFilter: `${baseUrl}/filter/range/cases/<:response>`,
+    perClientCaseRangeFilterData: `${baseUrl}/filter/range/cases/<:clientId>/<:response>/`,
+    perClientCaseRangeFilterCount: `${baseUrl}/filter/range/cases/<:clientId>/<:response>`,
   },
   users: {
     getBriefUsers: `${baseUrl}/users/brief`,
@@ -60,6 +66,6 @@ export const endpoints = {
     deepSearch: `${baseUrl}/dashboard/deep/search/<:q>`,
     getCasesPerClient: `${baseUrl}/dashboard/cases/per/client`,
     getDashConuts: `${baseUrl}/dashboard/counts`,
-    getEnforcementCases: `${baseUrl}/dashboard/cases/enforcement`
+    getFirst10MostRecentCases: `${baseUrl}/dashboard/cases/first_10_most_recent_cases`
   },
 };

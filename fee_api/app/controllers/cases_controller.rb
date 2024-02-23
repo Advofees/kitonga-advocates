@@ -15,14 +15,14 @@ class CasesController < ApplicationController
 
   def search_cases
     begin
-      render json: policy_scope(Case).where("cases.#{params[:q]}::text ILIKE ?", "%#{params[:v]}%").paginate(page: params[:page_number], per_page: params[:page_population])
+      render json: policy_scope(Case).where("cases.#{params[:q]}::text ILIKE ?", "%#{params[:v]}%").order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
     rescue ActiveRecord::StatementInvalid => e
       render json: []
     end
   end
 
   def index
-    render json: policy_scope(Case).paginate(page: params[:page_number], per_page: params[:page_population])
+    render json: policy_scope(Case).order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
   end
 
   def filter_helper(filtered_cases, response_columns)
@@ -43,14 +43,14 @@ class CasesController < ApplicationController
         render json: { count: policy_scope(Case).where(case_match_params.as_json).count }
       else
         if filter_params[:page_number] && filter_params[:page_population]
-          render json: filter_helper(policy_scope(Case).where(case_match_params.as_json).paginate(page: filter_params[:page_number], per_page: filter_params[:page_population]), response_columns)
+          render json: filter_helper(policy_scope(Case).where(case_match_params.as_json).order("created_at DESC").paginate(page: filter_params[:page_number], per_page: filter_params[:page_population]), response_columns)
         else
           filtered_cases = []
 
           if (filter_params[:client_only])
-            filtered_cases = policy_scope(Case).where({ **case_match_params.as_json, client_id: filter_params[:client_only][:client_and_id] })
+            filtered_cases = policy_scope(Case).where({ **case_match_params.as_json, client_id: filter_params[:client_only][:client_and_id] }).order("created_at DESC")
           else
-            filtered_cases = policy_scope(Case).where(case_match_params.as_json)
+            filtered_cases = policy_scope(Case).where(case_match_params.as_json).order("created_at DESC")
           end
 
           matched_cases = []
@@ -102,9 +102,9 @@ class CasesController < ApplicationController
         render json: { count: policy_scope(Case).where(case_sql, *sql_values.flatten).count }
       else
         if filter_params[:page_number] && filter_params[:page_population]
-          render json: filter_helper(policy_scope(Case).where(case_sql, *sql_values.flatten).paginate(page: filter_params[:page_number], per_page: filter_params[:page_population]), response_columns)
+          render json: filter_helper(policy_scope(Case).where(case_sql, *sql_values.flatten).order("created_at DESC").paginate(page: filter_params[:page_number], per_page: filter_params[:page_population]), response_columns)
         else
-          filtered_cases = policy_scope(Case).where(case_sql, *sql_values.flatten)
+          filtered_cases = policy_scope(Case).where(case_sql, *sql_values.flatten).order("created_at DESC")
 
           matched_cases = []
 
@@ -127,6 +127,37 @@ class CasesController < ApplicationController
 
           render json: filter_helper(filtered_cases.filter { |c| payment_information_params.size < 1 ? true : matched_cases.include?(c.id) }, response_columns)
         end
+      end
+    end
+  end
+
+  def range_filter
+  
+    range_filter_hash = filter_params[:per_column_range_filter_params]
+
+    pp filter_params
+
+    if not range_filter_hash or not range_filter_hash[:parameter] or not range_filter_hash[:parameter_range] or range_filter_hash[:parameter_range].size < 1
+      render json: { error: "Unprocessable Entity" }, status: :unprocessable_entity
+    else
+
+      sql_tokens = []
+      sql_values = []
+
+      if params[:client_id]
+        client = find_client()
+        sql_tokens << "cases.client_id = ?"
+        sql_values << client.id
+      end
+
+      sql_tokens << "cases.#{range_filter_hash[:parameter]} >= ?"
+      sql_tokens << "cases.#{range_filter_hash[:parameter]} < ?"
+      sql_values << range_filter_hash[:parameter_range]
+
+      if filter_params[:response] == "count"
+        render json: { count: policy_scope(Case).order("created_at DESC").where( sql_tokens.flatten.join(" AND "), *sql_values.flatten).count }
+      else
+        render json: policy_scope(Case).where( sql_tokens.flatten.join(" AND "), *sql_values.flatten).order("created_at DESC").paginate(page: filter_params[:page_number], per_page: filter_params[:page_population])
       end
     end
   end
@@ -293,6 +324,15 @@ class CasesController < ApplicationController
     @casex = Case.find(params[:id])
   end
 
+  def find_client
+    client = Client.find_by(id: params[:client_id])
+    if client
+      client
+    else
+      raise ResourceNotFoundException, "Client by id #{params[:client_id]} not found"
+    end
+  end
+
   def bulk_destruction_ids
     params.permit(case_ids: [])
   end
@@ -303,6 +343,8 @@ class CasesController < ApplicationController
       :page_population,
       :criteria,
       :response,
+      :client_id,
+      per_column_range_filter_params: [:parameter, parameter_range: []],
       response_columns: [],
       client_only: [:client_and_id],
       match_columns: [

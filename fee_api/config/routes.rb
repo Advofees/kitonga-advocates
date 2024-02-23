@@ -25,7 +25,7 @@ Rails.application.routes.draw do
         get "/deep/search/:q", to: "dashboard#deep_search"
         get "/cases/per/client", to: "dashboard#cases_per_client"
         get "/counts", to: "dashboard#data_counts"
-        get "/cases/enforcement", to: "dashboard#enforcement_cases"
+        get "/cases/first_10_most_recent_cases", to: "dashboard#first_10_most_recent_cases"
       end
 
       scope "search" do
@@ -41,6 +41,10 @@ Rails.application.routes.draw do
       scope "filter" do
         post "/cases/:criteria", to: "cases#filter"
         post "/clients/:criteria", to: "clients#filter"
+        post "/filter/cases/count/:q/:v", to: "cases#filter"
+        post "/range/cases/:response", to: "cases#range_filter"
+        post "/range/cases/:client_id/:response/:page_number/:page_population", to: "cases#range_filter"
+        post "/range/cases/:client_id/:response", to: "cases#range_filter"
       end
 
       scope "cases" do

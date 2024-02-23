@@ -11,8 +11,8 @@ class DashboardController < ApplicationController
         }
     end
 
-    def enforcement_cases
-        render json: Case.where(status: 'Enforcement').limit(5)
+    def first_10_most_recent_cases
+        render json: policy_scope(Case).order("created_at DESC").limit(10)
     end
 
     def deep_search

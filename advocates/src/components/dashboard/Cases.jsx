@@ -20,8 +20,14 @@ export default function Cases({ setLoading }) {
   const paginationConfig = {
     modelName: "Case",
     itemsPrimaryKey: "id",
-    paginationEndpoint: endpoints.pagination.getCases,
-    populationEndpoint: endpoints.statistics.casesCount,
+    paginationEndpoint: {
+      endpoint: endpoints.pagination.getCases,
+      method: "GET",
+    },
+    populationEndpoint: {
+      endpoint: endpoints.statistics.casesCount,
+      method: "GET",
+    },
     itemsPerPage: 10,
     componentName: Case,
     detailsComponent: CaseDetails,
@@ -203,8 +209,14 @@ export default function Cases({ setLoading }) {
     },
     searchSupport: {
       support: true,
-      searchPopulationEndpoint: endpoints.statistics.searchCasesCount,
-      searchPaginationEndpoint: endpoints.pagination.search.searchCases,
+      searchPopulationEndpoint: {
+        endpoint: endpoints.statistics.searchCasesCount,
+        method: "GET",
+      },
+      searchPaginationEndpoint: {
+        endpoint: endpoints.pagination.search.searchCases,
+        method: "GET",
+      },
       searchFields: [
         "id",
         "title",
@@ -213,7 +225,7 @@ export default function Cases({ setLoading }) {
         "clients_reference",
         "record",
       ],
-    },
+    }
   };
 
   useEffect(() => {

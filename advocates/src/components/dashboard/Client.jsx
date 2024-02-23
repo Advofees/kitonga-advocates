@@ -50,7 +50,7 @@ export function Client({ client, selectedClient, setSelectedClient }) {
   );
 }
 
-export function ClientDetails({ client = {} }) {
+export function ClientDetails({ client = {}, className }) {
   const [currentClient, setCurrentClient] = useState({});
   //const [casesStatusTally, setCasesStatusTally] = useState({});
 
@@ -79,7 +79,7 @@ export function ClientDetails({ client = {} }) {
   // sortedStatistics.sort((a, b) => b.count - a.count);
 
   return (
-    <div className="mx-4 border-l-[10px] border-amber-600 bg-white rounded-r-lg">
+    <div className={`${className}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b my-2 py-4 px-4">
         <h3 className="text-2xl font-bold py-2">{client.name}</h3>
         <div className="flex gap-2">

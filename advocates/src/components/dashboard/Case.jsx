@@ -84,7 +84,12 @@ export default function Case({ casex, selectedCase, setSelectedCase }) {
   );
 }
 
-export function CaseDetails({ casex = {}, setLoading, normalCrudManipulator }) {
+export function CaseDetails({
+  casex = {},
+  setLoading,
+  normalCrudManipulator,
+  className,
+}) {
   const [tasks, setTasks] = useState([]);
   const [importantDates, setImportantDatess] = useState([]);
   const [paymentInformation, setPaymentInformation] = useState(null);
@@ -212,13 +217,16 @@ export function CaseDetails({ casex = {}, setLoading, normalCrudManipulator }) {
   };
 
   return (
-    <div className="p-4 border-l-4 shadow-md shadow-black/10 my-12">
-      <NavLink
-        to={`/dashboard/cases/${casex.id}`}
-        className="text-xs px-2 pb-4"
-      >
-        {casex.id}
-      </NavLink>
+    <div className={`${className}`}>
+      <div>
+        <h5>Case ID</h5>
+        <NavLink
+          to={`/dashboard/cases/${casex.id}`}
+          className="text-xs px-2 pb-4"
+        >
+          {casex.id}
+        </NavLink>
+      </div>
       {casey && (
         <div className="flex flex-col gap-8">
           <div>
@@ -527,7 +535,82 @@ export function CaseDetails({ casex = {}, setLoading, normalCrudManipulator }) {
 
           {paymentInformation?.id ? (
             <div className="overflow-hidden rounded">
-              <h4 className="text-xl py-2 px-4">Payment Information</h4>
+              <div className="flex flex-wrap gap-2 px-4 items-center justify-between">
+                <h4 className="text-xl py-2 px-4">Payment Information</h4>
+                <EditModal
+                  receiveNewRecord={(res) => {
+                    setPaymentInformation(res);
+                  }}
+                  description="Edit Payment Information"
+                  anchorText="Edit Payment Information"
+                  dataEndpoint={endpoints.cases.getPaymentInformation.replace(
+                    "<:caseId>",
+                    casex.id
+                  )}
+                  updateEndpoint={endpoints.cases.patchPaymentInformation.replace(
+                    "<:caseId>",
+                    casex.id
+                  )}
+                  editableFields={[
+                    {
+                      name: "payment_type",
+                      as: "select",
+                      required: true,
+                      label: "Select Type of Payment",
+                      options: [
+                        {
+                          value: "full",
+                          label: "Full Payment",
+                        },
+                        {
+                          value: "installment",
+                          label: "Installment",
+                        },
+                      ],
+                    },
+                    {
+                      name: "outstanding",
+                      as: "text",
+                      required: true,
+                    },
+                    {
+                      name: "paid_amount",
+                      as: "text",
+                      required: true,
+                    },
+                    {
+                      name: "total_fee",
+                      as: "text",
+                      required: true,
+                    },
+                    {
+                      name: "deposit_pay",
+                      as: "text",
+                      required: true,
+                    },
+                    {
+                      name: "deposit_fees",
+                      as: "text",
+                      required: true,
+                    },
+                    {
+                      name: "final_fees",
+                      as: "text",
+                      required: true,
+                    },
+                    {
+                      name: "final_pay",
+                      as: "text",
+                      required: true,
+                    },
+                    {
+                      name: "deposit",
+                      as: "text",
+                      required: true,
+                    },
+                  ]}
+                />
+              </div>
               <div className="p-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 <div className="rounded bg-white line-shadow p-4">
                   <div className="text-center pb-2">
@@ -539,7 +622,11 @@ export function CaseDetails({ casex = {}, setLoading, normalCrudManipulator }) {
                       completeColor="rgb(120 53 15)"
                       incompleteColor="white"
                       innerClassName="bg-gray-200 font-extrabold text-amber-800"
-                      percentage={76}
+                      percentage={
+                        (parseFloat(paymentInformation.paid_amount) /
+                          parseFloat(paymentInformation.total_fee)) *
+                        100
+                      }
                     />
                   </div>
                 </div>
@@ -864,7 +951,13 @@ export function CaseDetails({ casex = {}, setLoading, normalCrudManipulator }) {
   );
 }
 
-function AddPaymentInformation({ id, title, description, handleSubmit }) {
+export function AddPaymentInformation({
+  id,
+  title,
+  description,
+  handleSubmit,
+  modalAndchorText = "Add Payment Information",
+}) {
   const [paymentInformation, setPaymentInformation] = useState({});
 
   const handlePaymentInformationChange = (e) => {
@@ -905,8 +998,8 @@ function AddPaymentInformation({ id, title, description, handleSubmit }) {
         fields.find((field) => !Boolean(paymentInformation[field]))
       )}
       icon={<FontAwesomeIcon icon={faAdd} />}
-      description="Add Payment Information"
-      anchorText="Add Payment Information"
+      description={modalAndchorText}
+      anchorText={modalAndchorText}
       modalContent={
         <div className="text-sm">
           <h4 className="flex gap-4">

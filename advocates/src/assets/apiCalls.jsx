@@ -15,16 +15,16 @@ export const apiCalls = {
       .then((response) => {
         if (response.status < 400) {
           response.json().then((responseData) => {
-            successCallback(responseData);
+            successCallback(responseData, response.status);
           });
         } else {
           response.json().then((responseData) => {
-            errorCallback(responseData);
+            errorCallback(responseData, response.status);
           });
         }
       })
       .catch((error) => {
-        errorCallback(error);
+        errorCallback(error, -1);
       });
   },
   postRequest: ({
@@ -43,16 +43,16 @@ export const apiCalls = {
       .then((response) => {
         if (response.status < 400) {
           response.json().then((responseData) => {
-            successCallback(responseData);
+            successCallback(responseData, response.status);
           });
         } else {
           response.json().then((responseData) => {
-            errorCallback(responseData);
+            errorCallback(responseData, response.status);
           });
         }
       })
       .catch((error) => {
-        errorCallback(error);
+        errorCallback(error, 0);
       });
   },
   deleteRequest: ({
@@ -68,15 +68,15 @@ export const apiCalls = {
     })
       .then((response) => {
         if (response.status < 400) {
-          successCallback("Successfully Deleted");
+          successCallback("Successfully Deleted", response.status);
         } else {
           response.json().then((responseData) => {
-            errorCallback(responseData);
+            errorCallback(responseData, response.status);
           });
         }
       })
       .catch((error) => {
-        errorCallback(error);
+        errorCallback(error, 0);
       });
   },
 };

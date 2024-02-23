@@ -7,6 +7,7 @@ class ApplicationController < ActionController::API
     wrap_parameters format: []
     # include ActionController::Cookies
     rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
+    rescue_from ResourceNotFoundException, with: :resource_not_found_response
     rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity_response
     rescue_from ForbiddenAccessException, with: :forbidden_access_response
     rescue_from SessionExpiredException, with: :session_expired_response
@@ -103,6 +104,10 @@ class ApplicationController < ActionController::API
 
     def record_not_found_response
         render json: { error: "#{controller_name.classify} not found", message: "RESOURCE NOT FOUND" }, status: :not_found
+    end
+
+    def resource_not_found_response(exception)
+        render json: { message: exception.message }, status: :not_found
     end
 
     def unprocessable_entity_response(invalid)

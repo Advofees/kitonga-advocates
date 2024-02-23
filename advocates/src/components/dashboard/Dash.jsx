@@ -3,14 +3,14 @@ import { endpoints } from "../../assets/apis";
 import { apiCalls } from "../../assets/apiCalls";
 import { DataChart } from "../common/DataChart";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPrint, faSearch } from "@fortawesome/free-solid-svg-icons";
-import { ModalLink } from "../common/ModalLink";
+import { faLayerGroup, faSearch } from "@fortawesome/free-solid-svg-icons";
 import { joinArrays, utilityFunctions } from "../../assets/functions";
 import { StrokeText } from "../common/StrokeText";
 import { SpeedCounter } from "../common/SpeedCounter";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Puff } from "react-loader-spinner";
 import { useNavigate } from "react-router-dom";
+import { NoResults } from "../common/NoResults";
 
 export function Dash() {
   const [casesPerClient, setCasesPerClient] = useState([]);
@@ -26,7 +26,7 @@ export function Dash() {
     [
       [endpoints.dash.getCasesPerClient, setCasesPerClient],
       [endpoints.dash.getDashConuts, setCounts],
-      [endpoints.dash.getEnforcementCases, setEnforcementCases],
+      [endpoints.dash.getFirst10MostRecentCases, setEnforcementCases],
     ].forEach((prop) => {
       apiCalls.getRequest({
         endpoint: prop[0],
@@ -187,7 +187,16 @@ export function Dash() {
                   ))}
                 </div>
               ) : (
-                <></>
+                <>
+                  {/* <NoResults
+                    content={
+                      <div className="px-4 py-2 rounded-2xl flex gap-2 items-center bg-white m-2">
+                        <FontAwesomeIcon icon={faLayerGroup} />
+                        <span>No records</span>
+                      </div>
+                    }
+                  /> */}
+                </>
               )}
               {searchResults?.clients?.length ? (
                 <div>
@@ -223,7 +232,16 @@ export function Dash() {
                   ))}
                 </div>
               ) : (
-                <></>
+                <>
+                  {/* <NoResults
+                    content={
+                      <div className="px-4 py-2 rounded-2xl flex gap-2 items-center bg-white m-2">
+                        <FontAwesomeIcon icon={faLayerGroup} />
+                        <span>No records</span>
+                      </div>
+                    }
+                  /> */}
+                </>
               )}
             </div>
           </div>
@@ -239,13 +257,7 @@ export function Dash() {
               {utilityFunctions.snakeCaseToTitleCase(c)}
             </div>
             <div className="text-4xl font-extrabold font-mono">
-              <StrokeText
-                text={
-                  <>
-                    <SpeedCounter value={counts[c]} />
-                  </>
-                }
-              />
+              <StrokeText text={counts[c]} />
             </div>
           </div>
         ))}

@@ -14,7 +14,7 @@ class ClientsController < ApplicationController
 
     def search_clients
         begin
-            render json: policy_scope(Client).where("clients.#{params[:q]}::text ILIKE ?", "%#{params[:v]}%").paginate(page: params[:page_number], per_page: params[:page_population])
+            render json: policy_scope(Client).where("clients.#{params[:q]}::text ILIKE ?", "%#{params[:v]}%").order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
         rescue ActiveRecord::StatementInvalid => e
             render json: []
         end
@@ -22,7 +22,7 @@ class ClientsController < ApplicationController
 
     def filter
         if filter_params[:criteria] == "strict"
-            render json: policy_scope(Client).where(filter_params[:match_columns])
+            render json: policy_scope(Client).where(filter_params[:match_columns]).order("created_at DESC")
         else
             if filter_params[:match_columns]&.keys.length > 0
                 client_tokens = filter_params[:match_columns].keys.reduce([]) do |acc, curr|
@@ -30,7 +30,7 @@ class ClientsController < ApplicationController
                     acc
                 end
             
-                render json: policy_scope(Client).where("#{client_tokens.join(" OR ")}", *filter_params[:match_columns]&.values.map { |v| "%#{v}%" } ).map { |v| v.as_json.select { |k| filter_params[:response_columns].map { |r| r.to_s }.include?(k) } }
+                render json: policy_scope(Client).where("#{client_tokens.join(" OR ")}", *filter_params[:match_columns]&.values.map { |v| "%#{v}%" } ).order("created_at DESC").map { |v| v.as_json.select { |k| filter_params[:response_columns].map { |r| r.to_s }.include?(k) } }
             else
                 render json: []
             end
@@ -46,7 +46,7 @@ class ClientsController < ApplicationController
     end
 
     def index
-        render json: Client.all.paginate(page: params[:page_number], per_page: params[:page_population])
+        render json: Client.all.order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
     end
 
     def show

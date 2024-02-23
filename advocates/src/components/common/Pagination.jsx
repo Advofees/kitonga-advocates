@@ -2,15 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { usePagination } from "../hooks/usePagination";
 import { ScaleButton } from "./ScaleButton";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowDown,
-  faArrowLeft,
-  faArrowRight,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faFilter } from "@fortawesome/free-solid-svg-icons";
 import { VscLayers } from "react-icons/vsc";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { utilityFunctions } from "../../assets/functions";
-import { Dropdown, Form, InputGroup } from "react-bootstrap";
+import { Dropdown, Form, InputGroup, Tab, Tabs } from "react-bootstrap";
 import { NoResults } from "./NoResults";
 
 export function Pagination({
@@ -23,6 +19,7 @@ export function Pagination({
     componentName,
     detailsComponent,
     detailsProps,
+    generalProps,
     dataKey = "data",
     create: { NewRecordComponent, newRecordProps, interceptCreation } = {},
     destroy: { DeleteComponent, deleteProps, interceptDestruction } = {},
@@ -32,6 +29,19 @@ export function Pagination({
       interceptUpdate,
       updateDataSource,
     } = {},
+    filterSupport: {
+      filterSupport,
+      filterBy,
+      filterPopulationEndpoint,
+      filterPaginationEndpoint,
+      payloadTransformer,
+    } = {
+      filterPopulationEndpoint: "",
+      filterPaginationEndpoint: "",
+      filterSupport: false,
+      filterBy: [],
+      payloadTransformer: () => {},
+    },
     searchSupport: {
       support,
       searchFields,
@@ -45,7 +55,6 @@ export function Pagination({
     },
   },
   items: [items, setItems] = useState([]),
-  generalProps = {},
   direction = "vertical",
   selfVScroll: { vScroll, vStyle, vClasses } = {
     vScroll: false,
@@ -74,8 +83,12 @@ export function Pagination({
   });
 
   const [search, setSearch] = useState({
-    q: searchFields[0],
+    q: searchFields ? searchFields[0] : "",
     v: "",
+  });
+  const [filter, setFilter] = useState({
+    q: filterBy ? filterBy[0]?.name || "" : "",
+    v: filterBy ? (filterBy[0]?.rangeable ? ["", ""] : [""]) : [""],
   });
 
   const updateStagedItems = (id, action) => {
@@ -89,11 +102,12 @@ export function Pagination({
 
   const handlePageFetch = (n, s) => {
     handlePagination({
-      paginationEndpoint: endpoint.data,
-      populationEndpoint: endpoint.count,
+      endpoint,
       pageNumber: n,
       pagePopulation: s,
-      errorCallback: (error) => {},
+      errorCallback: (error) => {
+        console.log(error)
+      },
       setEndpointPopulation,
       pageOverlapReseter: (newPage) => {
         setNextPage(newPage);
@@ -101,7 +115,6 @@ export function Pagination({
       successCallback: (res) => {
         if (Array.isArray(res) && res.length > 0) {
           setItems(res);
-          // setNextPage(n + 1);
         }
       },
     });
@@ -111,11 +124,28 @@ export function Pagination({
     setPagePopulation(newPopulation);
   };
 
-  const handleChange = (k, v) => {
-    setSearch({
-      ...search,
-      [k]: v,
-    });
+  const handleChange = (entity, k, v) => {
+    if (entity === "search") {
+      setSearch({
+        ...search,
+        [k]: v,
+      });
+    } else if (entity === "filter") {
+      setFilter({
+        ...filter,
+        [k]: v,
+      });
+    }
+  };
+
+  const handleFilterTabChange = (k) => {
+    const tab = filterBy.find((f) => f.name === k);
+    if (tab) {
+      setFilter({
+        q: k,
+        v: tab.rangeable ? ["", ""] : [""],
+      });
+    }
   };
 
   const normalCrudManipulator = (newItem, state) => {
@@ -136,20 +166,35 @@ export function Pagination({
     setStagedItems([]);
   };
 
+  const handleFilter = (e) => {
+    e.preventDefault();
+    setNextPage(1);
+    setItems([]);
+    setEndpoint({
+      data: filterPaginationEndpoint,
+      count: filterPopulationEndpoint,
+      payload: payloadTransformer(filter),
+    });
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     setNextPage(1);
     setItems([]);
-    let newPaginationEndpoint = searchPaginationEndpoint.replace(
-      "<:q>",
-      search.q
-    );
-    newPaginationEndpoint = newPaginationEndpoint.replace("<:v>", search.v);
-    let newPopulationEndpoint = searchPopulationEndpoint.replace(
-      "<:q>",
-      search.q
-    );
-    newPopulationEndpoint = newPopulationEndpoint.replace("<:v>", search.v);
+    const newPaginationEndpoint = {
+      endpoint: searchPaginationEndpoint.endpoint
+        .replace("<:q>", search.q)
+        .replace("<:v>", search.v),
+      method: searchPaginationEndpoint.method,
+    };
+
+    const newPopulationEndpoint = {
+      endpoint: searchPopulationEndpoint.endpoint
+        .replace("<:q>", search.q)
+        .replace("<:v>", search.v),
+      method: searchPopulationEndpoint.method,
+    };
+
     setEndpoint({
       data: newPaginationEndpoint,
       count: newPopulationEndpoint,
@@ -312,42 +357,174 @@ export function Pagination({
           </Dropdown>
         )}
       </div>
-      {support && searchFields?.length > 0 && (
-        <form onSubmit={handleSearch} className="flex-grow px-4 py-2">
-          <div className="flex flex-wrap gap-x-4 gap-y-1 rounded overflow-hidden px-4">
-            {searchFields.map((p, i) => (
-              <div className="flex gap-2" key={i}>
-                <input
-                  name="q"
-                  checked={search.q === p}
-                  value={p}
-                  type="radio"
-                  onChange={(e) => handleChange("q", e.target.value)}
-                />
-                <span>{utilityFunctions.snakeCaseToTitleCase(p)}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex shadow-md shadow-amber-900/50 rounded overflow-hidden max-w-lg">
-            <input
-              required
-              className="flex-grow py-2 px-4 outline-none"
-              placeholder={`Search by ${
-                search.v
-                  ? utilityFunctions.snakeCaseToTitleCase(search.v)
-                  : "..."
-              }`}
-              type="text"
-              value={search.v}
-              onChange={(e) => handleChange("v", e.target.value)}
-            />
-            <button className="px-4 bg-amber-800 text-white hover:bg-amber-900 duration-300">
-              <FontAwesomeIcon icon={faSearch} />
-            </button>
-          </div>
-        </form>
+      {(support || filterSupport) && (
+        <div className="px-4 pt-2">
+          <Tabs
+            unmountOnExit={true}
+            justify
+            defaultActiveKey={support ? "search" : "filter"}
+            className="px-8"
+          >
+            {support && searchFields?.length > 0 && (
+              <Tab
+                title={
+                  <div className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faSearch} />
+                    <span>Search</span>
+                  </div>
+                }
+                eventKey="search"
+              >
+                <form onSubmit={handleSearch} className="flex-grow px-4 py-2">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 rounded overflow-hidden px-4">
+                    {searchFields.map((p, i) => (
+                      <div className="flex gap-2" key={i}>
+                        <input
+                          name="q"
+                          checked={search.q === p}
+                          value={p}
+                          type="radio"
+                          onChange={(e) =>
+                            handleChange("search", "q", e.target.value)
+                          }
+                        />
+                        <span>{utilityFunctions.snakeCaseToTitleCase(p)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex shadow-md shadow-amber-900/50 rounded overflow-hidden">
+                    <input
+                      required
+                      className="flex-grow py-2 px-4 outline-none"
+                      placeholder={`Search by ${
+                        search.v
+                          ? utilityFunctions.snakeCaseToTitleCase(search.v)
+                          : "..."
+                      }`}
+                      type="text"
+                      value={search.v}
+                      onChange={(e) =>
+                        handleChange("search", "v", e.target.value)
+                      }
+                    />
+                    <button className="px-4 bg-amber-800 text-white hover:bg-amber-900 duration-300">
+                      <FontAwesomeIcon icon={faSearch} />
+                    </button>
+                  </div>
+                </form>
+              </Tab>
+            )}
+            {filterSupport && filterBy?.length > 0 && (
+              <Tab
+                title={
+                  <div className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faFilter} />
+                    <span>Filter</span>
+                  </div>
+                }
+                eventKey="filter"
+              >
+                <div className="py-2">
+                  <Tabs
+                    justify
+                    className="px-6"
+                    onSelect={(key) => {
+                      handleFilterTabChange(key);
+                    }}
+                    defaultActiveKey={filterBy[0]?.name}
+                  >
+                    {filterBy.map((fp, i) => (
+                      <Tab
+                        onClick={() => handleChange("filter", "q", fp.name)}
+                        title={utilityFunctions.snakeCaseToTitleCase(
+                          fp.name || ""
+                        )}
+                        eventKey={fp.name}
+                        className="flex gap-2"
+                        key={i}
+                      >
+                        {fp.rangeable ? (
+                          <form
+                            onSubmit={handleFilter}
+                            className="flex flex-col md:flex-row gap-2 items-start py-2"
+                          >
+                            <div className="grid grid-cols-2 gap-4 flex-grow">
+                              <InputGroup>
+                                <InputGroup.Text>From</InputGroup.Text>
+                                <Form.Control
+                                  type={fp.type}
+                                  style={{ outline: "" }}
+                                  rows={4}
+                                  name={fp.name}
+                                  onChange={(e) => {
+                                    handleChange("filter", "v", [
+                                      e.target.value,
+                                      filter?.v[1] || "",
+                                    ]);
+                                  }}
+                                  value={filter?.v[0] || ""}
+                                  required
+                                />
+                              </InputGroup>
+                              <InputGroup>
+                                <InputGroup.Text>To</InputGroup.Text>
+                                <Form.Control
+                                  type={fp.type}
+                                  style={{ outline: "none" }}
+                                  rows={4}
+                                  name={fp.name}
+                                  onChange={(e) => {
+                                    handleChange("filter", "v", [
+                                      filter?.v[0] || "",
+                                      e.target.value,
+                                    ]);
+                                  }}
+                                  value={filter?.v[1] || ""}
+                                  required
+                                />
+                              </InputGroup>
+                            </div>
+                            <button className="line-shadow py-2 px-3 rounded-lg bg-amber-800 hover:bg-white text-[#fff] hover:text-black duration-300">
+                              Go
+                            </button>
+                          </form>
+                        ) : (
+                          <form
+                            onSubmit={handleFilter}
+                            className="pt-2 flex gap-2 items-center"
+                          >
+                            <InputGroup className="flex-grow">
+                              <Form.Control
+                                placeholder={`Input ${utilityFunctions.snakeCaseToTitleCase(
+                                  fp.name || ""
+                                )}`}
+                                type={fp.type}
+                                style={{ outline: "none" }}
+                                rows={4}
+                                name={fp.name}
+                                onChange={() => {
+                                  handleChange("filter", "v", [e.target.value]);
+                                }}
+                                value={filter?.v[0] || ""}
+                                required
+                              />
+                            </InputGroup>
+                            <button className="line-shadow py-2 px-3 rounded-lg bg-amber-800 hover:bg-white text-[#fff] hover:text-black duration-300">
+                              Go
+                            </button>
+                          </form>
+                        )}
+                      </Tab>
+                    ))}
+                  </Tabs>
+                </div>
+              </Tab>
+            )}
+          </Tabs>
+        </div>
       )}
-      <div className="px-4">
+
+      <div className="px-4 pt-2">
         <InputGroup className="w-max">
           <InputGroup.Text>Records per page</InputGroup.Text>
           <Form.Select

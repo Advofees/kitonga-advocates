@@ -1,7 +1,6 @@
 import "./App.css";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { Dashboard } from "./components/dashboard/Dashboard";
-import { Home } from "./components/home/Home";
 
 function App() {
   
@@ -9,7 +8,7 @@ function App() {
     <div className="">
       <div>
         <Routes>
-          <Route path="/*" element={<Home />} />
+          <Route path="/*" element={<Navigate to="dashboard" />} />
           <Route path="/dashboard/*" element={<Dashboard />} />
         </Routes>
       </div>

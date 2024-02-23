@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiCalls } from "../../assets/apiCalls";
 import { endpoints } from "../../assets/apis";
 import { ClientDetails } from "./Client";
@@ -7,6 +7,8 @@ import { Pagination } from "../common/Pagination";
 import { FormModal } from "../common/FormModal";
 import EditModal from "../common/EditModal";
 import { PairView } from "./PairView";
+import { notifiers } from "../../assets/notifiers";
+import { AddPaymentInformation } from "./Case";
 
 function ClientDetailsWrapper({ setLoading }) {
   const { clientId } = useParams();
@@ -34,14 +36,21 @@ function ClientDetailsWrapper({ setLoading }) {
       const config = {
         modelName: "Case",
         itemsPrimaryKey: "id",
-        paginationEndpoint: endpoints.pagination.search.searchCases
-          .replace("<:q>", "client_id")
-          .replace("<:v>", client.id),
-        populationEndpoint: endpoints.statistics.searchCasesCount
-          .replace("<:q>", "client_id")
-          .replace("<:v>", client.id),
+        paginationEndpoint: {
+          endpoint: endpoints.pagination.search.searchCases
+            .replace("<:q>", "client_id")
+            .replace("<:v>", client.id),
+          method: "GET",
+        },
+        populationEndpoint: {
+          endpoint: endpoints.statistics.searchCasesCount
+            .replace("<:q>", "client_id")
+            .replace("<:v>", client.id),
+          method: "GET",
+        },
         itemsPerPage: 10,
         componentName: CaseDisplayItem,
+        generalProps: { setLoading },
         dataKey: "casex",
         create: {
           NewRecordComponent: FormModal,
@@ -54,7 +63,7 @@ function ClientDetailsWrapper({ setLoading }) {
                 Authorization: "Bearer " + sessionStorage.getItem("token"),
                 "Content-Type": "application/json",
               },
-              httpBody: payload,
+              httpBody: { ...payload, client_id: clientId },
               successCallback: (res) => {
                 setLoading(false);
                 notifiers.httpSuccess("Case created successfully");
@@ -104,17 +113,29 @@ function ClientDetailsWrapper({ setLoading }) {
             description: "Create New Case",
           },
         },
-        searchSupport: {
-          support: false,
-          searchPopulationEndpoint: endpoints.statistics.searchCasesCount,
-          searchPaginationEndpoint: endpoints.pagination.search.searchCases,
-          searchFields: [
-            "id",
-            "title",
-            "case_no_or_parties",
-            "file_reference",
-            "clients_reference",
-            "record",
+        filterSupport: {
+          filterSupport: true,
+          filterPopulationEndpoint: {
+            endpoint: endpoints.filter.perClientCaseRangeFilterCount
+              .replace("<:clientId>", clientId)
+              .replace("<:response>", "count"),
+            method: "POST",
+          },
+          filterPaginationEndpoint: {
+            endpoint: endpoints.filter.perClientCaseRangeFilterData
+              .replace("<:clientId>", clientId)
+              .replace("<:response>", "data"),
+            method: "POST",
+          },
+          payloadTransformer: (payload) => ({
+            per_column_range_filter_params: {
+              parameter: payload.q,
+              parameter_range: payload.v,
+            },
+          }),
+          filterBy: [
+            { name: "created_at", type: "date", rangeable: true },
+            { name: "record", type: "number", rangeable: true },
           ],
         },
       };
@@ -125,7 +146,15 @@ function ClientDetailsWrapper({ setLoading }) {
 
   return (
     <div className="bg-gray-100 py-4">
-      <div>{client && <ClientDetails client={client} />}</div>
+      <h4 className="text-xl px-4 py-4">Client Details</h4>
+      <div>
+        {client && (
+          <ClientDetails
+            className="mx-4 border-l-[10px] border-amber-600 bg-white rounded-r-lg"
+            client={client}
+          />
+        )}
+      </div>
       <div>
         <h3 className="px-4 py-2 text-2xl">{client?.name} Cases</h3>
       </div>
@@ -160,7 +189,8 @@ function ClientDetailsWrapper({ setLoading }) {
   );
 }
 
-function CaseDisplayItem({ casex = {} }) {
+function CaseDisplayItem({ casex = {}, setLoading }) {
+  const navigate = useNavigate();
   const [casey, setCasey] = useState(casex);
   const [paymentInformation, setPaymentInformation] = useState(null);
   useEffect(() => {
@@ -186,11 +216,44 @@ function CaseDisplayItem({ casex = {} }) {
     }
   }, [casex]);
 
+  function submitPaymentInformation(payload) {
+    setLoading(true);
+    apiCalls.postRequest({
+      endpoint: endpoints.cases.initializePaymentInformation.replace(
+        "<:caseId>",
+        casey.id
+      ),
+      httpHeaders: {
+        Accept: "application/json",
+        Authorization: "Bearer " + sessionStorage.getItem("token"),
+        "Content-Type": "application/json",
+      },
+      httpBody: payload,
+      successCallback: (res) => {
+        setLoading(false);
+        notifiers.httpSuccess("Succesfully Initialized Payment");
+        setPaymentInformation(res);
+      },
+      errorCallback: (err) => {
+        setLoading(false);
+        notifiers.httpError(err);
+      },
+    });
+  }
+
   return (
     <div className="bg-white mt-4 border-l-[10px] rounded-lg border-amber-500 p-4">
-      <div>
-        <h4 className="text-gray-700 font-bold text-lg">{casey?.title}</h4>
-        <div className="border-b pb-2">{casey?.description}</div>
+      <div className="border-b pb-2 flex items-end">
+        <div className="flex-grow">
+          <h4 className="text-gray-700 font-bold text-lg">{casey?.title}</h4>
+          <div className="">{casey?.description}</div>
+        </div>
+        <button
+          onClick={() => navigate(`/dashboard/cases/${casey.id}`)}
+          className="flex gap-2 items-center line-shadow rounded px-4 py-2 text-amber-800 hover:text-white hover:bg-amber-700 duration-200"
+        >
+          View More
+        </button>
       </div>
       {casey && (
         <div className="border-b">
@@ -201,6 +264,8 @@ function CaseDisplayItem({ casex = {} }) {
               "file_reference",
               "clients_reference",
               "record",
+              "created_at",
+              "updated_at",
             ].map((f) => ({
               name: f,
               dir: f == "v",
@@ -259,7 +324,7 @@ function CaseDisplayItem({ casex = {} }) {
           </div>
         </div>
       )}
-      {paymentInformation && (
+      {paymentInformation ? (
         <div>
           <PairView
             className="grid md:grid-cols-2 lg:grid-cols-4 pb-4 relative"
@@ -314,47 +379,56 @@ function CaseDisplayItem({ casex = {} }) {
                 },
                 {
                   name: "outstanding",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
                 {
                   name: "paid_amount",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
                 {
                   name: "total_fee",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
                 {
                   name: "deposit_pay",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
                 {
                   name: "deposit_fees",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
                 {
                   name: "final_fees",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
                 {
                   name: "final_pay",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
                 {
                   name: "deposit",
-                  as: "text",
+                  as: "number",
                   required: true,
                 },
               ]}
             />
           </div>
+        </div>
+      ) : (
+        <div className="px-4 pt-2 ">
+          <AddPaymentInformation
+            title={casey.title}
+            description={casey.description}
+            id={casey.id}
+            handleSubmit={submitPaymentInformation}
+          />
         </div>
       )}
     </div>

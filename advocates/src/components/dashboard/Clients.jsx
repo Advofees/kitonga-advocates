@@ -14,8 +14,14 @@ export default function Clients({ setLoading }) {
   const paginationConfig = {
     modelName: "Client",
     itemsPrimaryKey: "id",
-    paginationEndpoint: endpoints.pagination.getClients,
-    populationEndpoint: endpoints.statistics.clientsCount,
+    paginationEndpoint: {
+      endpoint: endpoints.pagination.getClients,
+      method: "GET",
+    },
+    populationEndpoint: {
+      endpoint: endpoints.statistics.clientsCount,
+      method: "GET",
+    },
     itemsPerPage: 10,
     componentName: Client,
     detailsComponent: ClientDetails,
@@ -51,8 +57,8 @@ export default function Clients({ setLoading }) {
           { as: "email", required: true, name: "email" },
           { as: "text", required: true, name: "contact_number" },
           { as: "text", required: true, name: "address" },
-          { as: "password", required: true, name: "password" },
-          { as: "password", required: true, name: "password_confirmation" },
+          // { as: "password", required: true, name: "password" },
+          // { as: "password", required: true, name: "password_confirmation" },
         ],
         description: "New Client",
         anchorText: "Register New Client",
@@ -176,8 +182,14 @@ export default function Clients({ setLoading }) {
     },
     searchSupport: {
       support: true,
-      searchPopulationEndpoint: endpoints.statistics.searchClientsCount,
-      searchPaginationEndpoint: endpoints.pagination.search.searchClients,
+      searchPopulationEndpoint: {
+        endpoint: endpoints.statistics.searchClientsCount,
+        method: "GET",
+      },
+      searchPaginationEndpoint: {
+        endpoint: endpoints.pagination.search.searchClients,
+        method: "GET",
+      },
       searchFields: [
         "id",
         "name",
