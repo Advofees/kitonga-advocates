@@ -56,12 +56,12 @@ export function Dashboard() {
       link: "/dashboard/clients",
       description: "Clients",
     },
-    {
-      label: "Settings",
-      icon: faGear,
-      link: "/dashboard/iam",
-      description: "Settings",
-    },
+    // {
+    //   label: "Settings",
+    //   icon: faGear,
+    //   link: "/dashboard/iam",
+    //   description: "Settings",
+    // },
   ];
 
   useEffect(() => {
