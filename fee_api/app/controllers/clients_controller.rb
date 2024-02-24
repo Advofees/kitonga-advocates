@@ -50,6 +50,8 @@ class ClientsController < ApplicationController
     end
 
     def show
+        client = find_client
+        authorize client, :view?
         render json: find_client
     end
     

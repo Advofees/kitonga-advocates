@@ -11,7 +11,7 @@ import Error403 from "../common/Error403";
 function CaseDetailsWrapper({ setLoading }) {
   const { caseId } = useParams();
   const [casex, setCasex] = useState(null);
-  const [status, setStatus] = useState({});
+  const [status, setStatus] = useState({code: 0, message: "Loading case..."});
 
   useEffect(() => {
     apiCalls.getRequest({
@@ -41,7 +41,7 @@ function CaseDetailsWrapper({ setLoading }) {
         />
       ) : (
         <div>
-          {status === 0 ? (
+          {status?.code === 0 ? (
             <div className="flex h-48 justify-center items-center">
               <ThreeDots width={40} color="rgba(202, 101, 38)" />
             </div>

@@ -1,10 +1,30 @@
 class ClientPolicy < ApplicationPolicy
 
+  def view?
+    show?
+  end
+
+  def create?
+    show?
+  end
+
+  def delete?
+    destroy?
+  end
+
   def show?
     unless !has_role?("ROLE_ADMIN")
       return true
     end
     return false
+  end
+
+  def destroy?
+    show?
+  end
+
+  def update?
+    show?
   end
 
   class Scope < Scope

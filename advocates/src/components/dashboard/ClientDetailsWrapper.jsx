@@ -9,12 +9,19 @@ import EditModal from "../common/EditModal";
 import { PairView } from "./PairView";
 import { notifiers } from "../../assets/notifiers";
 import { AddPaymentInformation } from "./Case";
+import { ThreeDots } from "react-loader-spinner";
+import Error404 from "../common/Error404";
+import Error403 from "../common/Error403";
 
 function ClientDetailsWrapper({ setLoading }) {
   const { clientId } = useParams();
   const [client, setClient] = useState(null);
   const [paginationConfig, setPaginationConfig] = useState(null);
   const [cases, setCases] = useState([]);
+  const [status, setStatus] = useState({
+    code: 0,
+    message: "Loading client...",
+  });
 
   useEffect(() => {
     apiCalls.getRequest({
@@ -24,8 +31,8 @@ function ClientDetailsWrapper({ setLoading }) {
         Accept: "application/json",
       },
       successCallback: setClient,
-      errorCallback: (err) => {
-        console.log(err);
+      errorCallback: (err, status) => {
+        setStatus({ code: status, message: err });
       },
     });
   }, [clientId]);
@@ -148,43 +155,77 @@ function ClientDetailsWrapper({ setLoading }) {
     <div className="bg-gray-100 py-4">
       <h4 className="text-xl px-4 py-4">Client Details</h4>
       <div>
-        {client && (
+        {client ? (
           <ClientDetails
             className="mx-4 border-l-[10px] border-amber-600 bg-white rounded-r-lg"
             client={client}
           />
+        ) : (
+          <div>
+            {status?.code === 0 ? (
+              <div className="flex h-48 justify-center items-center">
+                <ThreeDots width={40} color="rgba(202, 101, 38)" />
+              </div>
+            ) : status?.code === 404 ? (
+              <div>
+                <Error404 className="py-4" imageClassName="w-64">
+                  <div className="text-xl text-center flex-grow py-8 max-w-lg px-4">
+                  {status?.message?.error || status?.message?.message}
+                  </div>
+                </Error404>
+              </div>
+            ) : status?.code === 403 ? (
+              <div>
+                <Error403 className="" imageClassName="w-64">
+                  <div className="text-xl text-center flex-grow py-8 max-w-lg px-4">
+                    {status?.message?.error || status?.message?.message}
+                  </div>
+                </Error403>
+              </div>
+            ) : (
+              <div>
+                <h4 className="text-xl text-center px-4 py-6">
+                  Sorry! An error occured while fetching client details
+                </h4>
+              </div>
+            )}
+          </div>
         )}
       </div>
-      <div>
-        <h3 className="px-4 py-2 text-2xl">{client?.name} Cases</h3>
-      </div>
-      <div>
-        {paginationConfig && (
-          <Pagination
-            direction="vertical"
-            selfVScroll={{
-              vScroll: true,
-              vClasses: "p-2",
-            }}
-            items={[cases, setCases]}
-            //   recordsHeader={
-            //     <div className="flex items-center gap-2 text-xs font-bold p-2">
-            //       <span className="w-8"></span>
-            //       <div className="grid grid-cols-2 items-center flex-grow">
-            //         <div className="">Case</div>
-            //         <div className="flex flex-wrap gap-x-4">
-            //           <h5>Case No/Parties (CN)</h5>
-            //           <h5>File Reference (FR)</h5>
-            //           <h5>Clients Reference (CR)</h5>
-            //         </div>
-            //       </div>
-            //       <div className="min-w-[7rem] max-w-[7rem]">Record</div>
-            //     </div>
-            //   }
-            paginationConfig={{ ...paginationConfig }}
-          />
-        )}
-      </div>
+      {client && (
+        <>
+          <div>
+            <h3 className="px-4 py-2 text-2xl">{client?.name} Cases</h3>
+          </div>
+          <div>
+            {paginationConfig && (
+              <Pagination
+                direction="vertical"
+                selfVScroll={{
+                  vScroll: true,
+                  vClasses: "p-2",
+                }}
+                items={[cases, setCases]}
+                //   recordsHeader={
+                //     <div className="flex items-center gap-2 text-xs font-bold p-2">
+                //       <span className="w-8"></span>
+                //       <div className="grid grid-cols-2 items-center flex-grow">
+                //         <div className="">Case</div>
+                //         <div className="flex flex-wrap gap-x-4">
+                //           <h5>Case No/Parties (CN)</h5>
+                //           <h5>File Reference (FR)</h5>
+                //           <h5>Clients Reference (CR)</h5>
+                //         </div>
+                //       </div>
+                //       <div className="min-w-[7rem] max-w-[7rem]">Record</div>
+                //     </div>
+                //   }
+                paginationConfig={{ ...paginationConfig }}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

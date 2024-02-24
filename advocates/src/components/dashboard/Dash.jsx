@@ -98,64 +98,64 @@ export function Dash() {
     );
   }, [casesPerClient]);
 
-  useEffect(() => {
-    if (typeof weekCounts === "object") {
-      setWeeklyChart(
-        <DataChart
-          plot_data={{
-            title: (
-              <div className="flex items-center justify-between">
-                <div>The past seven days</div>
-                {/* <ModalLink
-                submitText="PRINT"
-                description="Print"
-                anchorText=""
-                anchorClassName="text-amber-800 p-2 rounded hover:bg-white hover:-translate-y-2 duration-300"
-                icon={<FontAwesomeIcon icon={faPrint} />}
-              /> */}
-              </div>
-            ),
-            dimensionRatio: 0.4,
-            graph_type: "line",
-            options: {
-              indexAxis: "x",
-              plugins: {
-                legend: {
-                  display: false,
-                },
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Weekday",
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "Number of cases",
-                  },
-                },
-              },
-            },
-            data: {
-              labels: ["Mon", "Tue", "Wed", "Thur", "Fri", "Mon", "Tue"],
-              datasets: [
-                {
-                  label: "Number of Cases",
-                  data: [12, 23, 9, 17, 34, 27, 8],
-                  borderColor: "rgb(146 64 14)",
-                  backgroundColor: "rgba(107, 114, 128, .7)",
-                  fill: false,
-                },
-              ],
-            },
-          }}
-        />
-      );
-    }
-  }, [weekCounts]);
+  // useEffect(() => {
+  //   if (typeof weekCounts === "object") {
+  //     setWeeklyChart(
+  //       <DataChart
+  //         plot_data={{
+  //           title: (
+  //             <div className="flex items-center justify-between">
+  //               <div>The past seven days</div>
+  //               {/* <ModalLink
+  //               submitText="PRINT"
+  //               description="Print"
+  //               anchorText=""
+  //               anchorClassName="text-amber-800 p-2 rounded hover:bg-white hover:-translate-y-2 duration-300"
+  //               icon={<FontAwesomeIcon icon={faPrint} />}
+  //             /> */}
+  //             </div>
+  //           ),
+  //           dimensionRatio: 0.4,
+  //           graph_type: "line",
+  //           options: {
+  //             indexAxis: "x",
+  //             plugins: {
+  //               legend: {
+  //                 display: false,
+  //               },
+  //             },
+  //             scales: {
+  //               x: {
+  //                 title: {
+  //                   display: true,
+  //                   text: "Weekday",
+  //                 },
+  //               },
+  //               y: {
+  //                 title: {
+  //                   display: true,
+  //                   text: "Number of cases",
+  //                 },
+  //               },
+  //             },
+  //           },
+  //           data: {
+  //             labels: ["Mon", "Tue", "Wed", "Thur", "Fri", "Mon", "Tue"],
+  //             datasets: [
+  //               {
+  //                 label: "Number of Cases",
+  //                 data: [12, 23, 9, 17, 34, 27, 8],
+  //                 borderColor: "rgb(146 64 14)",
+  //                 backgroundColor: "rgba(107, 114, 128, .7)",
+  //                 fill: false,
+  //               },
+  //             ],
+  //           },
+  //         }}
+  //       />
+  //     );
+  //   }
+  // }, [weekCounts]);
 
   const handleSearch = () => {
     if (search) {
