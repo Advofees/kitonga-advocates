@@ -1,0 +1,2 @@
+# class CaseAccessPolicy < ApplicationRecord
+# end

@@ -6,11 +6,12 @@ import { CaseDetails } from "./Case";
 import { Loader } from "../common/Loader";
 import Error404 from "../common/Error404";
 import { ThreeDots } from "react-loader-spinner";
+import Error403 from "../common/Error403";
 
 function CaseDetailsWrapper({ setLoading }) {
   const { caseId } = useParams();
   const [casex, setCasex] = useState(null);
-  const [status, setStatus] = useState(0);
+  const [status, setStatus] = useState({});
 
   useEffect(() => {
     apiCalls.getRequest({
@@ -21,19 +22,17 @@ function CaseDetailsWrapper({ setLoading }) {
       },
       successCallback: (res, status) => {
         setCasex(res);
-        setStatus(status);
+        setStatus({ code: status, message: "Ok" });
       },
       errorCallback: (err, status) => {
-        setStatus(status);
+        setStatus({ code: status, message: err });
       },
     });
   }, [caseId]);
 
-  console.log(status);
-
   return (
     <div className="">
-      <h4 className="text-xl px-4 pt-4">Case Details</h4>
+      {casex && <h4 className="text-xl px-4 pt-4">Case Details</h4>}
       {casex ? (
         <CaseDetails
           className="p-4 border-l-4"
@@ -46,13 +45,21 @@ function CaseDetailsWrapper({ setLoading }) {
             <div className="flex h-48 justify-center items-center">
               <ThreeDots width={40} color="rgba(202, 101, 38)" />
             </div>
-          ) : status === 404 ? (
+          ) : status?.code === 404 ? (
             <div>
               <Error404 className="py-4" imageClassName="mx-auto max-w-xl">
-                <div className="text-4xl text-center flex-grow py-8">
+                <div className="text-xl text-center flex-grow py-8">
                   Case not found
                 </div>
               </Error404>
+            </div>
+          ) : status?.code === 403 ? (
+            <div>
+              <Error403 className="" imageClassName="w-64">
+                <div className="text-xl text-center flex-grow py-8">
+                  {status?.message?.error || status?.message?.message}
+                </div>
+              </Error403>
             </div>
           ) : (
             <div>

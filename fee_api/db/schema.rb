@@ -84,7 +84,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_15_070743) do
     t.string "email"
     t.string "address"
     t.string "contact_number"
-    t.string "password_digest"
+    t.string "password_digest", default: "password"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

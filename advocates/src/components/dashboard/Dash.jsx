@@ -3,23 +3,23 @@ import { endpoints } from "../../assets/apis";
 import { apiCalls } from "../../assets/apiCalls";
 import { DataChart } from "../common/DataChart";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLayerGroup, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { joinArrays, utilityFunctions } from "../../assets/functions";
 import { StrokeText } from "../common/StrokeText";
-import { SpeedCounter } from "../common/SpeedCounter";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Puff } from "react-loader-spinner";
 import { useNavigate } from "react-router-dom";
-import { NoResults } from "../common/NoResults";
 
 export function Dash() {
   const [casesPerClient, setCasesPerClient] = useState([]);
+  const [weekCounts, setWeekCounts] = useState({});
   const [counts, setCounts] = useState({});
   const [enforcementCases, setEnforcementCases] = useState([]);
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState({});
   const [dataChart, setDataChart] = useState(null);
+  const [weeklyChart, setWeeklyChart] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -98,6 +98,65 @@ export function Dash() {
     );
   }, [casesPerClient]);
 
+  useEffect(() => {
+    if (typeof weekCounts === "object") {
+      setWeeklyChart(
+        <DataChart
+          plot_data={{
+            title: (
+              <div className="flex items-center justify-between">
+                <div>The past seven days</div>
+                {/* <ModalLink
+                submitText="PRINT"
+                description="Print"
+                anchorText=""
+                anchorClassName="text-amber-800 p-2 rounded hover:bg-white hover:-translate-y-2 duration-300"
+                icon={<FontAwesomeIcon icon={faPrint} />}
+              /> */}
+              </div>
+            ),
+            dimensionRatio: 0.4,
+            graph_type: "line",
+            options: {
+              indexAxis: "x",
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Weekday",
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "Number of cases",
+                  },
+                },
+              },
+            },
+            data: {
+              labels: ["Mon", "Tue", "Wed", "Thur", "Fri", "Mon", "Tue"],
+              datasets: [
+                {
+                  label: "Number of Cases",
+                  data: [12, 23, 9, 17, 34, 27, 8],
+                  borderColor: "rgb(146 64 14)",
+                  backgroundColor: "rgba(107, 114, 128, .7)",
+                  fill: false,
+                },
+              ],
+            },
+          }}
+        />
+      );
+    }
+  }, [weekCounts]);
+
   const handleSearch = () => {
     if (search) {
       setSearching(true);
@@ -151,40 +210,42 @@ export function Dash() {
                 placeholder="Search Cases/Clients"
               />
             </div>
-            <div className="grid lg:grid-cols-2 max-h-[80vh] scroll_y">
+            <div className="grid lg:grid-cols-2">
               {searchResults?.cases?.length ? (
                 <div>
                   <h5 className="px-4 font-bold text-amber-700">Cases</h5>
-                  {searchResults?.cases?.map((_case_, idx) => (
-                    <div
-                      onClick={() =>
-                        navigate(`/dashboard/cases/${_case_["id"]}`)
-                      }
-                      className="border-l-[20px] hover:border-amber-500 p-4 grid grid-cols-2 bg-gray-100 m-2 shadow-md hover:bg-white hover:text-black hover:shadow-lg hover:shadow-black/20 cursor-pointer duration-200"
-                      key={idx}
-                    >
-                      {Object.keys(_case_)
-                        .filter(
-                          (k) => !["id", "entity", "description"].includes(k)
-                        )
-                        .map((k, j) => {
-                          return (
-                            <div className="break-all p-2" key={j}>
-                              <h5 className="font-bold">
-                                {utilityFunctions.snakeCaseToTitleCase(k)}
-                              </h5>
-                              <div>
-                                {joinArrays(
-                                  `${_case_[k]}`,
-                                  search,
-                                  "bg-amber-700 text-white"
-                                )}
+                  <div className="max-h-[80vh] scroll_y">
+                    {searchResults?.cases?.map((_case_, idx) => (
+                      <div
+                        onClick={() =>
+                          navigate(`/dashboard/cases/${_case_["id"]}`)
+                        }
+                        className="border-l-[20px] hover:border-amber-500 p-4 grid grid-cols-2 bg-gray-100 m-2 shadow-md hover:bg-white hover:text-black hover:shadow-lg hover:shadow-black/20 cursor-pointer duration-200"
+                        key={idx}
+                      >
+                        {Object.keys(_case_)
+                          .filter(
+                            (k) => !["id", "entity", "description"].includes(k)
+                          )
+                          .map((k, j) => {
+                            return (
+                              <div className="break-all p-2" key={j}>
+                                <h5 className="font-bold">
+                                  {utilityFunctions.snakeCaseToTitleCase(k)}
+                                </h5>
+                                <div>
+                                  {joinArrays(
+                                    `${_case_[k]}`,
+                                    search,
+                                    "bg-amber-700 text-white"
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  ))}
+                            );
+                          })}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <>
@@ -203,33 +264,38 @@ export function Dash() {
                   {searchResults?.clients?.length && (
                     <h5 className="px-4 font-bold text-amber-700">Clients</h5>
                   )}
-                  {searchResults?.clients?.map((client, idx) => (
-                    <div
-                      className="border-l-[20px] hover:border-amber-500 p-4 grid grid-cols-2 bg-gray-100 m-2 shadow-md hover:bg-white hover:text-black hover:shadow-lg hover:shadow-black/20 cursor-pointer duration-200"
-                      key={idx}
-                    >
-                      {Object.keys(client)
-                        .filter(
-                          (k) => !["id", "entity", "description"].includes(k)
-                        )
-                        .map((k, j) => {
-                          return (
-                            <div key={j}>
-                              <h5 className="font-bold">
-                                {utilityFunctions.snakeCaseToTitleCase(k)}
-                              </h5>
-                              <div>
-                                {joinArrays(
-                                  `${client[k]}`,
-                                  search,
-                                  "bg-amber-700 text-white"
-                                )}
+                  <div className="max-h-[80vh] scroll_y">
+                    {searchResults?.clients?.map((client, idx) => (
+                      <div
+                        onClick={() =>
+                          navigate(`/dashboard/clients/${client["id"]}`)
+                        }
+                        className="border-l-[20px] hover:border-amber-500 p-4 grid grid-cols-2 bg-gray-100 m-2 shadow-md hover:bg-white hover:text-black hover:shadow-lg hover:shadow-black/20 cursor-pointer duration-200"
+                        key={idx}
+                      >
+                        {Object.keys(client)
+                          .filter(
+                            (k) => !["id", "entity", "description"].includes(k)
+                          )
+                          .map((k, j) => {
+                            return (
+                              <div key={j}>
+                                <h5 className="font-bold">
+                                  {utilityFunctions.snakeCaseToTitleCase(k)}
+                                </h5>
+                                <div>
+                                  {joinArrays(
+                                    `${client[k]}`,
+                                    search,
+                                    "bg-amber-700 text-white"
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  ))}
+                            );
+                          })}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <>
@@ -247,24 +313,28 @@ export function Dash() {
           </div>
         </div>
       </div>
-      <div className="flex gap-8 px-8 py-4">
-        {Object.keys(counts).map((c, i) => (
-          <div
-            key={i}
-            className="shadow-md py-4 rounded px-12 duration-300 hover:shadow-xl hover:shadow-gray-600/50"
-          >
-            <div className="text-2xl font-bold">
-              {utilityFunctions.snakeCaseToTitleCase(c)}
+      <div className="grid lg:grid-cols-2 container mx-auto">
+        <div className="flex items-start gap-8 px-8 py-4">
+          {Object.keys(counts).map((c, i) => (
+            <div
+              key={i}
+              className="shadow-md py-4 rounded px-12 duration-300 hover:shadow-xl hover:shadow-gray-600/50"
+            >
+              <div className="text-2xl font-bold">
+                {utilityFunctions.snakeCaseToTitleCase(c)}
+              </div>
+              <div className="text-4xl font-extrabold font-mono">
+                <StrokeText text={counts[c]} />
+              </div>
             </div>
-            <div className="text-4xl font-extrabold font-mono">
-              <StrokeText text={counts[c]} />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {/* <div className="max-w-xl">{weeklyChart}</div> */}
       </div>
 
       <div className=" grid xl:grid-cols-2 p-4 gap-4 items-start">
-        <div className="p-4 shadow-md rounded duration-300 hover:shadow-2xl hover:shadow-gray-600/50">
+        <div className="p-4 shadow-md rounded duration-300 hover:shadow-2xl hover:shadow-gray-600/50 max-w-">
           {dataChart}
         </div>
         <div className="p-2">

@@ -1,5 +1,17 @@
 class CasePolicy < ApplicationPolicy
 
+  def view?
+    show?
+  end
+
+  def create?
+    
+  end
+
+  def delete?
+    destroy?
+  end
+
   def show?
     unless !has_role?("ROLE_ADMIN")
       return true
@@ -10,6 +22,14 @@ class CasePolicy < ApplicationPolicy
     else
       return @record.user_cases.map(&:user_id).include?(@user.principal["id"])
     end
+  end 
+
+  def destroy?
+    show?
+  end
+
+  def update?
+    show?
   end
 
   class Scope < Scope

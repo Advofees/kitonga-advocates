@@ -163,11 +163,12 @@ class CasesController < ApplicationController
   end
 
   def show
-    authorize @casex, :show?
+    authorize @casex, :view?
     render json: @casex
   end
 
   def create
+    authorize :create?
     cs = Case.create!(case_params)
     render json: cs, status: :created
   end
@@ -188,6 +189,7 @@ class CasesController < ApplicationController
   end
 
   def add_installment
+    authorize
     if @casex.payment_information
       payment_information = @casex.payment_information
       installment = Payment.create!({
@@ -290,11 +292,22 @@ class CasesController < ApplicationController
 
   def destroy
     @casex.destroy
+    authorize @casex, :destroy?
     head :no_content
   end
 
   def destroy_multiple
-    Case.destroy(bulk_destruction_ids[:case_ids])
+
+    case_ids = bulk_destruction_ids[:case_ids]
+
+    raise CustomException.new("Please provide atleast one case id", 400) unless case_ids and !case_ids.empty?
+
+    # Authorize all cases before bulk destruction
+    case_ids.each do |case_id|
+      authorize Case.find(case_id), :destroy?
+    end
+
+    Case.destroy(case_ids)
     head :no_content
   end
 

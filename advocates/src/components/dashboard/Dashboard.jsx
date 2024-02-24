@@ -17,9 +17,10 @@ import { faBars } from "@fortawesome/free-solid-svg-icons/faBars";
 import {
   faClose,
   faFolder,
+  faGear,
   faHome,
   faRightFromBracket,
-  faUser,
+  faUserAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import Clients from "./Clients";
 import { Loader } from "../common/Loader";
@@ -51,9 +52,15 @@ export function Dashboard() {
     },
     {
       label: "Clients",
-      icon: faUser,
+      icon: faUserAlt,
       link: "/dashboard/clients",
       description: "Clients",
+    },
+    {
+      label: "Settings",
+      icon: faGear,
+      link: "/dashboard/iam",
+      description: "Settings",
     },
   ];
 
@@ -133,7 +140,7 @@ export function Dashboard() {
               ) : (
                 <div
                   onClick={logout}
-                  className="text-start px-4 py-2 text-amber-800 m-2 shadow-md cursor-pointer rounded-sm shadow-amber-800 bg-gray-100 hover:bg-amber-800 hover:text-white hover:-translate-y-2 duration-300"
+                  className="text-start px-4 py-2 text-amber-800 cursor-pointer rounded-sm hover:bg-amber-800 hover:text-white duration-300"
                 >
                   Logout
                 </div>

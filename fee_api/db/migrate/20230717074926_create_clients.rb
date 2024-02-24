@@ -7,7 +7,7 @@ class CreateClients < ActiveRecord::Migration[7.0]
       t.string :email
       t.string :address
       t.string :contact_number
-      t.string :password_digest
+      t.string :password_digest, :default => 'password', :null => true
 
       t.timestamps
     end

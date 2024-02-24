@@ -12,6 +12,7 @@ class ApplicationController < ActionController::API
     rescue_from ForbiddenAccessException, with: :forbidden_access_response
     rescue_from SessionExpiredException, with: :session_expired_response
     rescue_from UnauthorizedAccessException, with: :unauthorized_access_response
+    rescue_from CustomException, with: :custom_exception_response
     rescue_from Pundit::NotAuthorizedError, with: :policy_violation_response
 
     before_action :authenticate
@@ -127,6 +128,10 @@ class ApplicationController < ActionController::API
     end
 
     def policy_violation_response(exception)
-        render json: { error: "You are #{exception.message}" }, status: 403
+        render json: { error: "You are #{exception.message} (#{exception.record&.id})" }, status: 403
+    end
+
+    def custom_exception_response(exception)
+        render json: { error: exception.message }, status: exception.code
     end
 end

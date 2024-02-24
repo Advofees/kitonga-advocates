@@ -30,7 +30,7 @@ import { Progress } from "../common/Progress";
 import { PairView } from "./PairView";
 import { useNavigate } from "react-router-dom";
 
-export default function Case({ casex, selectedCase, setSelectedCase }) {
+export default function Case({ casex }) {
   const navigate = useNavigate();
   return (
     <div
@@ -38,7 +38,7 @@ export default function Case({ casex, selectedCase, setSelectedCase }) {
       className={`relative group odd:bg-white hover:bg-amber-100 hover:font-bold duration-500 cursor-pointer flex items-center border-b border-amber-800/25`}
     >
       <div
-        onClick={() => setSelectedCase(casex)}
+        onClick={() => navigate(`/dashboard/cases/${casex.id})`)}
         className="flex-col items-center flex-grow py-4 px-2"
       >
         {/* <span className={`mx-2 text-xs font-bold rounded p-1`}>{casex.id}</span>{" "} */}
