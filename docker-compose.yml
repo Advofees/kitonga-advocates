@@ -1,26 +1,26 @@
 version: "3.8"
 
 services:
-  # fee-api:
-  #   build: fee_api
-  #   ports:
-  #     - "4000:4000"
-  #   environment:
-  #     - RAILS_ENV=development
-  #     - DATABASE_URL=postgres://advoc:advoc@postgres-db:5432/advoc
-  #   depends_on:
-  #     - postgres-db
-  #   networks:
-  #     - advoc_network
+  fee-api:
+    build: fee_api
+    ports:
+      - "4000:4000"
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgres://advoc:advoc@postgres-db:5432/advoc
+    depends_on:
+      - postgres-db
+    networks:
+      - advoc_network
   
-  # front-end:
-  #   build: advocates
-  #   ports:
-  #     - "3000:80"
-  #   depends_on:
-  #     - fee-api
-  #   networks:
-  #     - advoc_network
+  front-end:
+    build: advocates
+    ports:
+      - "3000:80"
+    depends_on:
+      - fee-api
+    networks:
+      - advoc_network
 
   postgres-db:
     image: postgres:latest
