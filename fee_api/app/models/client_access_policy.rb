@@ -1,2 +1,0 @@
-# class ClientAccessPolicy < ApplicationRecord
-# end

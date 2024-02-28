@@ -13,15 +13,7 @@ class CasePolicy < ApplicationPolicy
   end
 
   def show?
-    unless !has_role?("ROLE_ADMIN")
-      return true
-    end
-    
-    if @user&.grant == 'client'
-      return @record.client_id == @user.principal["id"]
-    else
-      return @record.user_cases.map(&:user_id).include?(@user.principal["id"])
-    end
+    resolve_access?("case", "CreateCase")
   end 
 
   def destroy?

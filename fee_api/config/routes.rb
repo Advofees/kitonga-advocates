@@ -3,6 +3,13 @@ Rails.application.routes.draw do
   resources :client_roles
   # Defines the root path route ("/")
   root "application#welcome"
+
+  get "/access/policies", to: "policies#index_of_access_policies"
+  get "/access/policies/:id", to: "policies#show_access_policy"
+  post "/access/policies", to: "policies#create_access_policy"
+  get "/resource/actions", to: "policies#index_of_resource_actions"
+  get "/resource/actions/:id", to: "policies#show_resource_action"
+  post "/resource/actions", to: "policies#create_resource_action"
   
   scope "api" do
     scope "v1" do

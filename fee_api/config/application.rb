@@ -40,9 +40,9 @@ module FeeApi
     # config.middleware.use ActionDispatch::Cookies
     # config.middleware.use config.session_store, config.session_options
 
-    config.generators do |g|
-      g.orm :active_record, primary_key_type: :uuid
-      # g.orm :mongoid
-    end
+    # config.generators do |g|
+    #   g.orm :active_record, primary_key_type: :uuid
+    #   # g.orm :mongoid
+    # end
   end
 end

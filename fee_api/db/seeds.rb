@@ -42668,7 +42668,7 @@ clients.each do |clnt|
   p_client = {**clnt}
   p_client.delete(:id)
   client = Client.create!(p_client)
-  client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 10)
+  client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 3)
 
   puts "Seeding #{client.name}'s cases"
   # puts "Seeding #{clnt[:name]}'s cases"

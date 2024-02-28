@@ -17,7 +17,7 @@ development:
   <<: *default
   adapter: postgresql
   encoding: unicode
-  #url: <%= ENV['DATABASE_URL'] %>
+  #url: <%= ENV['PG_DATABASE_URL'] %>
   url: postgres://advoc:advoc@localhost:5434/advoc
   
 
@@ -35,4 +35,4 @@ production:
   <<: *default
   adapter: postgresql
   encoding: unicode
-  url: <%= ENV['DATABASE_URL'] %>
+  url: <%= ENV['PG_DATABASE_URL'] %>

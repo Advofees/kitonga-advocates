@@ -9,11 +9,14 @@ class ApplicationController < ActionController::API
     rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
     rescue_from ResourceNotFoundException, with: :resource_not_found_response
     rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity_response
+    rescue_from Mongoid::Errors::Validations, with: :unprocessable_mongoid_entity_response
     rescue_from ForbiddenAccessException, with: :forbidden_access_response
     rescue_from SessionExpiredException, with: :session_expired_response
     rescue_from UnauthorizedAccessException, with: :unauthorized_access_response
     rescue_from CustomException, with: :custom_exception_response
     rescue_from Pundit::NotAuthorizedError, with: :policy_violation_response
+
+    rescue_from Mongoid::Errors::DocumentNotFound, with: :document_not_found_response
 
     before_action :authenticate
     skip_before_action :authenticate, only: [:welcome]
@@ -107,11 +110,19 @@ class ApplicationController < ActionController::API
         render json: { error: "#{controller_name.classify} not found", message: "RESOURCE NOT FOUND" }, status: :not_found
     end
 
+    def document_not_found_response(exception)
+        render json: { error: "Document not found"}, status: :not_found
+    end
+
     def resource_not_found_response(exception)
         render json: { message: exception.message }, status: :not_found
     end
 
     def unprocessable_entity_response(invalid)
+        render json: { errors: invalid.record.errors, message: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
+    end
+
+    def unprocessable_mongoid_entity_response(invalid)
         render json: { errors: invalid.record.errors, message: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
     end
 

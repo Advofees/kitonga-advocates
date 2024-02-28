@@ -38,8 +38,11 @@ gem "active_model_serializers", "~> 0.10.13"
 gem "jwt", "~> 2.7"
 
 gem "rack-cors", "~> 2.0"
+
 gem "will_paginate", "~> 4.0"
 
 gem "faker", "~> 3.2"
 
 gem "pundit", "~> 2.3"
+
+gem "mongoid", "~> 8.1"
