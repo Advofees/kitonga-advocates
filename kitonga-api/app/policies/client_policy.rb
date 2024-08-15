@@ -5,7 +5,7 @@ class ClientPolicy < ApplicationPolicy
   end
 
   def create?
-    show?
+    resolve_access?("CreateClient")
   end
 
   def delete?
@@ -13,18 +13,15 @@ class ClientPolicy < ApplicationPolicy
   end
 
   def show?
-    unless !has_role?("ROLE_ADMIN")
-      return true
-    end
-    return false
-  end
+    resolve_access?("ViewClient")
+  end 
 
   def destroy?
-    show?
+    resolve_access?("DestroyClient")
   end
 
   def update?
-    show?
+    resolve_access?("UpdateClient")
   end
 
   class Scope < Scope
