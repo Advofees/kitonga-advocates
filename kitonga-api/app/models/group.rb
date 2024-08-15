@@ -8,7 +8,7 @@ class Group < ApplicationRecord
     before_save :uppercase_name
 
     def self.to_krn(group_name)
-        "krn:role:#{group_name}"
+        "krn:role:name:#{group_name}"
     end
 
     private

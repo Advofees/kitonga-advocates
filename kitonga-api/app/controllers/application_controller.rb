@@ -10,17 +10,57 @@ class ApplicationController < ActionController::API
     rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
     rescue_from ResourceNotFoundException, with: :resource_not_found_response
     rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity_response
-    rescue_from Mongoid::Errors::Validations, with: :unprocessable_mongoid_entity_response
+    # rescue_from Mongoid::Errors::Validations, with: :unprocessable_mongoid_entity_response
     rescue_from ForbiddenAccessException, with: :forbidden_access_response
     rescue_from SessionExpiredException, with: :session_expired_response
     rescue_from UnauthorizedAccessException, with: :unauthorized_access_response
     rescue_from CustomException, with: :custom_exception_response
     rescue_from Pundit::NotAuthorizedError, with: :policy_violation_response
 
-    rescue_from Mongoid::Errors::DocumentNotFound, with: :document_not_found_response
+    # rescue_from Mongoid::Errors::DocumentNotFound, with: :document_not_found_response
 
     before_action :authenticate
-    skip_before_action :authenticate, only: [:welcome]
+    skip_before_action :authenticate, only: [:welcome, :index]
+
+    # def repeat_string(str, n = 1)
+    #     (0...n).to_a.map { str }
+    # end
+
+    # def wrap_with_modulus(elements)
+    #     elements.map { |str| "%#{str}%" }
+    # end
+
+    def index
+        render json: {"index" => "index"}
+    end
+        
+    #     resource_where_tokens = ["2525"]
+    #     principal_where_tokens = ["ROLE_ADMIN"]
+    #     action_where_tokens = ["306-"]
+
+    #     policies = AccessPolicy
+    #                 .select("DISTINCT access_policies.*")
+    #                 .where("EXISTS (
+    #                             SELECT 1
+    #                             FROM jsonb_array_elements(resources) AS elem
+    #                             WHERE #{repeat_string("elem::text ILIKE ?", resource_where_tokens.length).join(" OR ")}
+    #                         )
+    #                         AND EXISTS (
+    #                             SELECT 1
+    #                             FROM jsonb_array_elements(principals) AS elem
+    #                             WHERE #{repeat_string("elem::text ILIKE ?", principal_where_tokens.length).join(" OR ")}
+    #                         )
+    #                         AND EXISTS (
+    #                             SELECT 1
+    #                             FROM jsonb_array_elements(actions) AS elem
+    #                             WHERE #{repeat_string("elem::text ILIKE ?", action_where_tokens.length).join(" OR ")}
+    #                         )", 
+    #                         *wrap_with_modulus(resource_where_tokens),
+    #                         *wrap_with_modulus(principal_where_tokens),
+    #                         *wrap_with_modulus(action_where_tokens)
+    #                     )
+    #     render json: { "policies" => policies }
+    # end
 
     def welcome
         render json: { "Advokit" => "Advocacy and Case Management Suite" }
@@ -109,42 +149,42 @@ class ApplicationController < ActionController::API
     end
 
     def record_not_found_response
-        render json: { error: "#{controller_name.classify} not found", message: "RESOURCE NOT FOUND" }, status: :not_found
+        render json: { error: "#{controller_name.classify} not found", status: "RESOURCE NOT FOUND" }, status: :not_found
     end
 
-    def document_not_found_response(exception)
-        render json: { error: "Document not found"}, status: :not_found
-    end
+    # def document_not_found_response(exception)
+    #     render json: { error: "Document not found"}, status: :not_found
+    # end
 
     def resource_not_found_response(exception)
-        render json: { message: exception.message }, status: :not_found
+        render json: { status: "RESOURCE NOT FOUND", error: exception.message }, status: :not_found
     end
 
     def unprocessable_entity_response(invalid)
-        render json: { errors: invalid.record.errors, message: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
+        render json: { errors: invalid.record.errors, status: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
     end
 
-    def unprocessable_mongoid_entity_response(invalid)
-        render json: { errors: invalid.record.errors, message: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
-    end
+    # def unprocessable_mongoid_entity_response(invalid)
+    #     render json: { errors: invalid.record.errors, message: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
+    # end
 
     def forbidden_access_response(exception)
-        render json: { message: "FORBIDDEN ACCESS", error: exception.message }, status: :forbidden
+        render json: { status: "FORBIDDEN ACCESS", error: exception.message }, status: :forbidden
     end
 
     def session_expired_response(exception)
-        render json: { message: 'SESSION EXPIRED', error: exception.message }, status: :unauthorized
+        render json: { status: 'SESSION EXPIRED', error: exception.message }, status: :unauthorized
     end
 
     def unauthorized_access_response(exception)
-        render json: { status: exception.status, error: exception.message }, status: exception.status
+        render json: { status: "UNAUTHOURIZED ACCESS", code: exception.status, error: exception.message }, status: exception.status
     end
 
     def policy_violation_response(exception)
-        render json: { error: "You are #{exception.message} (#{exception.record&.id})" }, status: 403
+        render json: { "status": "POLICY VIOLATION", error: "You are #{exception.message} (#{exception.record&.id})" }, status: 403
     end
 
     def custom_exception_response(exception)
-        render json: { error: exception.message }, status: exception.code
+        render json: { error: exception.message, status: exception.status }, status: exception.code
     end
 end

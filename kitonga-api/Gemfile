@@ -36,6 +36,4 @@ gem "faker", "~> 3.4"
 
 gem "pundit", "~> 2.3"
 
-gem "mongoid", "~> 1.0"
-
 gem "jwt", "~> 2.8"

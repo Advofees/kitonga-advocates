@@ -1,28 +1,17 @@
 class PoliciesController < ApplicationController
-    skip_before_action :authenticate, only: [:index_of_access_policies, :show_access_policy, :create_access_policy, :index_of_resource_actions, :show_resource_action, :create_resource_action]
 
-    def index_of_access_policies
+    skip_before_action :authenticate, only: [:index, :show, :create]
+
+    def index
         render json: AccessPolicy.all
     end
 
-    def show_access_policy
+    def show
         render json: AccessPolicy.find(params[:id])
     end
 
-    def create_access_policy
+    def create
         render json: AccessPolicy.create!(access_policy_params)
-    end
-
-    def index_of_resource_actions
-        render json: ResourceAction.all
-    end
-
-    def show_resource_action
-        render json: ResourceAction.find(params[:id])
-    end
-
-    def create_resource_action
-        render json: ResourceAction.create!(resource_action_params)
     end
 
     private
@@ -35,12 +24,6 @@ class PoliciesController < ApplicationController
             actions: [],
             principals: [],
             resources: []
-        )
-    end
-
-    def resource_action_params
-        params.permit(
-            :name
         )
     end
 end

@@ -13,17 +13,20 @@ Rails.application.routes.draw do
   resources :client_roles
   # Defines the root path route ("/")
   root "application#welcome"
-
-  get "/access/policies", to: "policies#index_of_access_policies"
-  get "/access/policies/:id", to: "policies#show_access_policy"
-  post "/access/policies", to: "policies#create_access_policy"
-  get "/resource/actions", to: "policies#index_of_resource_actions"
-  get "/resource/actions/:id", to: "policies#show_resource_action"
-  post "/resource/actions", to: "policies#create_resource_action"
+  get "jsonb", to: "application#index"
   
   scope "api" do
     scope "v1" do
       get "/current/user", to: "sessions#profile"
+      
+      scope "authorization" do
+        get "/access/policies", to: "policies#index"
+        get "/access/policies/:id", to: "policies#show"
+        post "/access/policies", to: "policies#create"
+        get "/resource/actions", to: "resource_actions#index"
+        get "/resource/actions/:id", to: "resource_actions#show"
+        post "/resource/actions", to: "resource_actions#create"
+      end
 
       scope "stats" do
         get "/cases/count", to: "cases#count"

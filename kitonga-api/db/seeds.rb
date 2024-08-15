@@ -42665,6 +42665,13 @@ case_states = [
   "Closed"
 ]
 
+# Create client role
+puts "Create client role"
+client_role = Role.create!({
+  name: "CLIENT",
+  description: "Clients"
+})
+
 puts "Creating Clients and their cases"
 clients.slice(0, 4).each do |clnt|
   p_client = {**clnt}
@@ -42686,6 +42693,8 @@ clients.slice(0, 4).each do |clnt|
       status: case_states.sample,
       client_id: client.id,
     })
+
+    ClientRole.create! client_id: client.id, role_id: client_role.id
 
     # payment_information = PaymentInformation.create!(
     #   case_id: client_case.id,
@@ -42767,33 +42776,26 @@ groups = [
   { name: 'Lobbying Team', description: 'Engages in legal advocacy and lobbying' }
 ]
 
-# puts "Creating Superuser"
-# admin = User.create!({
-#     username: 'admin',
-#     name: 'admin admin',
-#     email: 'admin@gmail.com',
-#     contact_number: '555-444-3333',
-#     address: '789 Oak Rd',
-#     password: 'password'
-# })
+puts "Creating Superuser"
+admin = User.create!({
+    username: 'admin',
+    name: 'admin admin',
+    email: 'admin@gmail.com',
+    contact_number: '555-444-3333',
+    address: '789 Oak Rd',
+    password: 'password'
+})
 
-# # Create admin role
-# puts "Create admin role"
-# admin_role = Role.create!({
-#   name: "ADMIN",
-#   description: "Super users"
-# })
+# Create admin role
+puts "Create admin role"
+admin_role = Role.create!({
+  name: "ADMIN",
+  description: "Super users"
+})
 
-# # Create client role
-# puts "Create client role"
-# client_role = Role.create!({
-#   name: "CLIENT",
-#   description: "Clients"
-# })
-
-# # Assign ADMIN Privileges to above admin
-# puts "Assign ADMIN Privileges to above admin"
-# UserRole.create!({
-#   user_id: admin.id,
-#   role_id: admin_role.id
-# })
+# Assign ADMIN Privileges to above admin
+puts "Assign ADMIN Privileges to above admin"
+UserRole.create!({
+  user_id: admin.id,
+  role_id: admin_role.id
+})

@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_02_25_125524) do
+ActiveRecord::Schema[7.2].define(version: 2024_08_15_074123) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "access_policies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "description"
+    t.string "effect"
+    t.jsonb "actions", default: []
+    t.jsonb "principals", default: []
+    t.jsonb "resources", default: []
+    t.jsonb "conditions", default: []
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false

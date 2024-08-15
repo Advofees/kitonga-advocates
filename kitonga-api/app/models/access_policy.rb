@@ -1,25 +1,14 @@
-class AccessPolicy < MongoidApplicationRecord
-    
-    field :name, type: String
-    field :description, type: String
-
-    # Whether to Allow or Deny access
-    field :effect, type: String
-
-    # Action performeable on the attached resources
-    field :actions, type: Array
-
-    # Principals(roles, groups, iams) to allow or deny access
-    field :principals, type: Array
-
-    # Resources managed by this policy
-    field :resources, type: Array
-
-    # Conditions for this policy
-    field :conditions, type: Array
+class AccessPolicy < ApplicationRecord
+    # serialize :actions, coder: JSON
+    # serialize :principals, coder: JSON
+    # serialize :resources, coder: JSON
+    # serialize :conditions, coder: JSON
 
     validates :name, presence: true, uniqueness: true
     validates :description, presence: true
+    # validates :actions, presence: true
+    # validates :resources, presence: true
+    # validates :principals, presence: true
     validates :effect, inclusion: { in: %w(Allow Deny), message: "'%{value}' is not a valid effect" }
 
     validate :check_actions
@@ -87,8 +76,6 @@ class AccessPolicy < MongoidApplicationRecord
     end
 
     def validate_scheme(fld, scheme, pattern)
-
-        # gsub(/\*/, "\\\\\\*")
         
         unless scheme.match(pattern)
             errors.add(fld.to_sym, "#{fld.capitalize} is an invalid KRN")
@@ -99,7 +86,7 @@ class AccessPolicy < MongoidApplicationRecord
     end
 
     def check_emptiness(fld, fld_array)
-        if fld_array.empty?
+        if !fld_array || fld_array.empty?
             errors.add(fld.to_sym, "At least one #{ActiveSupport::Inflector.singularize(fld)} is required")
             return false
         end
@@ -118,34 +105,47 @@ class AccessPolicy < MongoidApplicationRecord
         result
       end
 
+    def is_attribute?(entity, attribute)
+        !!AccessPolicy.extract_column_names(entity).include?(attribute)
+    end
+
+    def self.extract_column_names(entity)
+        entity.column_names.filter { |col| !["updated_at", "created_at", "password_digest"].include?(col) } 
+    end
+
     def entity_exists?(flds, krn)
+
+        resources = {
+            "role" => Role,
+            "case" => Case,
+            "client" => Client,
+            "group" => Group,
+            "action" => ResourceAction,
+            "iam" => User
+        }
 
         _, resource_type, resource_field, resource_field_value = krn.split(':')
 
-        exists = false
+        entity = resources[resource_type]
 
-        if resource_type == "role"
-            exists = Role.exists?(id: resource_id) || Role.exists?(name: resource_id)
-            puts "exists: #{Role.exists?(name: resource_id)}"
-        elsif resource_type = "case"
-            exists = Case.exists?(id: resource_id)
-        elsif resource_type == "client"
-            exists = Client.exists?(id: resource_id)
-        elsif resource_type == "group"
-            exists = Group.exists?(id: resource_id)
-        elsif resource_type == "action"
-            exists = ResourceAction.exists?(id: resource_id) || ResourceAction.exists?(name: resource_id)
-        elsif resource_type == "iam"
-            exists = User.exists?(id: resource_id) || User.exists?(username: resource_id)
-        elsif ["*", ""].include?(resource_type)
+        if(!!entity)
+            unless is_attribute?(entity, resource_field)
+                errors.add(flds.to_sym, { "valid attributes" => AccessPolicy.extract_column_names(entity)})
+                return false
+            end
+
+            exists = false
+
+            exists = entity.exists?({ "#{resource_field}" => resource_field_value})
+
+            unless exists
+                errors.add(flds.to_sym, "#{krn} does not exist")
+                return false
+            end
+            exists
         else
             errors.add(flds.to_sym, "Invalid resource type")
-        end
-
-        unless exists
-            errors.add(flds.to_sym, "#{krn} does not exist")
             return false
         end
-        exists
     end
 end

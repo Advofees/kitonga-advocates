@@ -5,7 +5,7 @@ class CasePolicy < ApplicationPolicy
   end
 
   def create?
-    
+    resolve_access?("CreateCase")
   end
 
   def delete?
@@ -13,15 +13,15 @@ class CasePolicy < ApplicationPolicy
   end
 
   def show?
-    resolve_access?("case", "CreateCase")
+    resolve_access?("ViewCase")
   end 
 
   def destroy?
-    show?
+    resolve_access?("DestroyCase")
   end
 
   def update?
-    show?
+    resolve_access?("UpdateCase")
   end
 
   class Scope < Scope

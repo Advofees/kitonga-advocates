@@ -41,23 +41,63 @@ class ApplicationPolicy
     @user.authorities.include?(role)
   end
 
-  def resolve_access?(resource_type, desired_action)
-    # # Check for any access policy
-    # policies = AccessPolicy.where(
-    #   :resources => {"$elemMatch" => {"$eq" => "krn:#{resource_type}:#{@record&.id}"}},
-    #   :actions => {"$elemMatch" => {"$eq" => "krn:action:#{desired_action}"}}
-    # )
-    
-    # # Immediately deny access if no policy is attached
-    # return false if (policies.nil? || policies.empty?)
+  def repeat_string(str, n = 1)
+    (0...n).to_a.map { str }
+  end
 
-    # current_principals = [@user.authorities.map { |a| a.starts_with?("ROLE") ? Role.to_krn(a) : Group.to_krn(a)  } , "krn:#{@user.grant == "user" ? "iam" : "client"}:#{@user.principal["id"]}", "krn:#{@user.grant == "user" ? "iam" : "client"}:#{@user.principal["username"]}"].flatten
+  def wrap_with_modulus(elements)
+    elements.map { |str| "%#{str}%" }
+  end
+
+  # AND EXISTS (
+  # SELECT 1
+  # FROM jsonb_array_elements(principals) AS elem
+  # WHERE #{repeat_string("elem::text ILIKE ?", principal_where_tokens.length).join(" OR ")}
+  # )
+
+  def resolve_access?(desired_action)
+        action = ResourceAction.find_by name: desired_action
+
+        unless action
+          raise ResourceNotFoundException.new("The action your are trying to perform is not registered.")
+        end
+
+        record_hash = @record.as_json
+
+        resource_where_tokens = AccessPolicy.extract_column_names(@record.class)
+                                .map { |col| "krn:#{@record.class.name.downcase}:#{col}:#{record_hash[col]}" }
+
+        action_where_tokens = ["krn:action:id:#{action.id}"]
+
+        policies = AccessPolicy
+                    .select("DISTINCT access_policies.*")
+                    .where("EXISTS (
+                                SELECT 1
+                                FROM jsonb_array_elements(resources) AS elem
+                                WHERE #{repeat_string("elem::text ILIKE ?", resource_where_tokens.length).join(" OR ")}
+                            )
+                            AND EXISTS (
+                                SELECT 1
+                                FROM jsonb_array_elements(actions) AS elem
+                                WHERE #{repeat_string("elem::text ILIKE ?", action_where_tokens.length).join(" OR ")}
+                            )", 
+                            *wrap_with_modulus(resource_where_tokens),
+                            *wrap_with_modulus(action_where_tokens)
+                        )
     
-    # # Evaluate each policy
-    # policies.each do |policy|
-    #   return false if deny_access?(policy, current_principals)
-    #   return true if allow_access?(policy, current_principals)
-    # end
+    # Immediately deny access if no policy is attached
+    return false if (policies.nil? || policies.empty?)
+
+    current_principals = [
+      @user.authorities.map { |a| a.starts_with?("ROLE") ? Role.to_krn(a) : Group.to_krn(a) },
+      ["id", "username", "email"].map { |identifier| "krn:#{@user.grant == "user" ? "iam" : "client"}:#{identifier}:#{@user.principal["#{identifier}"]}" }
+    ].flatten
+    
+    # Evaluate each policy
+    policies.each do |policy|
+      return false if deny_access?(policy, current_principals)
+      return true if allow_access?(policy, current_principals)
+    end
     
     # No policy resolved at all
     false

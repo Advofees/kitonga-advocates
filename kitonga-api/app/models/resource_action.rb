@@ -6,6 +6,6 @@ class ResourceAction < ApplicationRecord
     private
 
     def check_spaces
-        errors.add(:name, "can't contain spaces") if name.match?(/\s+/)
+        errors.add(:name, "can't contain spaces") if name&.match?(/\s+/)
     end
 end
