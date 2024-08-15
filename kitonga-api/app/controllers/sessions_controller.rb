@@ -4,7 +4,6 @@ class SessionsController < ApplicationController
     
     def login
         user = find_principal
-        puts user
         if user&.authenticate(session_params[:password])
             # Send access token
             access_token(user, session_params[:grant_type])
@@ -15,6 +14,10 @@ class SessionsController < ApplicationController
                 raise UnauthorizedAccessException.new("#{session_params[:grant_type].capitalize} #{session_params[:identity]} not found", 404)
             end
         end
+    end
+    
+    def profile
+        render json: pundit_user, status: :ok
     end
 
     def access_token(usr, grant_type)
@@ -31,7 +34,11 @@ class SessionsController < ApplicationController
             payload[:groups] = usr.groups.map(&:name)
         end
 
-        render json: { access_token: encode_token(payload), realm: "Bearer", expires_in: 3600  }
+        token = encode_token(payload)
+
+        cookies.signed[:user] = { value: token, httponly: true, expires: 1.hour }
+
+        render json: { access_token: token, realm: "Bearer", expires_in: 3600  }
     end
 
     def find_principal

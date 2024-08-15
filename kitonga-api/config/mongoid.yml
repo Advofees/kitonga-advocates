@@ -4,8 +4,8 @@ development:
     # Defines the default client. (required)
     default:
       # Mongoid can connect to a URI accepted by the driver:
-      uri: mongodb://advoc:advoc@localhost:27019/advoc
-      #uri: <%= ENV['MONGODB_DATABASE_URL'] %>
+      # uri: mongodb://advoc:advoc@localhost:27019/advoc
+      uri: <%= ENV['MONGODB_DATABASE_URL'] %>
 
       # Otherwise define the parameters separately.
       # This defines the name of the default database that Mongoid can connect to.

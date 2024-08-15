@@ -1,9 +1,10 @@
-require 'base64'
+# require 'base64'
 
 class ApplicationController < ActionController::API
 
     include Pundit::Authorization
-
+    include ActionController::Cookies
+    
     wrap_parameters format: []
     # include ActionController::Cookies
     rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
@@ -25,62 +26,58 @@ class ApplicationController < ActionController::API
         render json: { "Advokit" => "Advocacy and Case Management Suite" }
     end
 
-    def pundit_user
-        @auth_context
-    end
-
     def authenticate
-        # Decode and verify JWT token from the 'jwt' cookie
-        # token = cookies.signed[:user]
-
-        authorization_header = request.headers['Authorization']
-
-        if authorization_header.present? && authorization_header.start_with?('Bearer') && authorization_header.split(/\s+/).size === 2
-            begin
-                secret_key = Rails.application.secrets.secret_key_base
-
-                # Obtain the token
-                token = authorization_header.split(/\s+/)[1]
-
-                # Decode token
-                decoded_token = JWT.decode(token, secret_key, true, { algorithm: 'HS512' })
-
-                # token_header
-                token_header = decoded_token[1]
-
-                unless (token_header.present? && token_header["exp"].present? && token_header["exp"] >= Time.now.to_i)
-                    raise SessionExpiredException, 'Your session has expired. Please log in again.'
-                end
-    
-                payload = decoded_token.first
-
-                if payload['grant_type'] == 'user'
-                    user = User.find(payload['id'])
-                    unless !user
-                        @auth_context = AuthContext.new((user.as_json only: [:username, :id, :name, :email ]), "user", [ user.roles.map(&:name), user.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq)
-                    end
-                elsif payload['grant_type'] == 'client'
-                    client = Client.find(payload['id'])
-                    unless !client
-                        @auth_context = AuthContext.new((client.as_json only: [:username, :id, :name, :email ]), "client", [ client.roles.map(&:name), client.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq)
-                    end
-                end
-            rescue JWT::DecodeError => e
-                # Invalid JWT token
-                raise UnauthorizedAccessException, "Invalid access token"
-            end
-        end
-
-        # If no valid JWT token found, denie access
-        unless @auth_context
+        unless logged_in?
             raise UnauthorizedAccessException
         end
     end
 
-    def encode_token(payload)
-        # Set the secret key used for signing the token
-        secret_key = Rails.application.secrets.secret_key_base
+    def logged_in?
+        !!pundit_user
+    end
 
+    def pundit_user
+        @auth_context ||= find_user_by_token
+    end
+
+    def find_user_by_token
+        token = cookies.signed[:user] || request.headers['Authorization']&.split(/\s+/)&.last
+        if token
+            decoded_token = decode_token(token)
+
+            ensure_token_is_not_expired(decoded_token)
+
+            payload = decoded_token.first
+
+            if payload['grant_type'] == 'user'
+                user = User.find(payload['id'])
+                unless !user
+                    @auth_context = AuthContext.new((user.as_json only: [:username, :id, :name, :email ]), "user", [ user.roles.map(&:name), user.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq)
+                end
+            elsif payload['grant_type'] == 'client'
+                client = Client.find(payload['id'])
+                unless !client
+                    @auth_context = AuthContext.new((client.as_json only: [:username, :id, :name, :email ]), "client", [ client.roles.map(&:name), client.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq)
+                end
+            end
+        end
+    end
+
+    def ensure_token_is_not_expired(decoded_token)
+        unless Time.at(decoded_token.last['exp']) > Time.now
+            raise SessionExpiredException, "Your session has expired! Please login again."
+        end
+    end
+
+    def decode_token(token)
+        begin
+            JWT.decode(token, secret_key, true, { algorithm: 'HS512' })
+        rescue JWT::DecodeError
+            raise UnauthorizedAccessException.new(message="Invalid credentials", status=403)
+        end
+    end
+
+    def encode_token(payload)
         custom_header = {
         'alg': 'HS512',
         'typ': 'JWT',
@@ -91,20 +88,25 @@ class ApplicationController < ActionController::API
         JWT.encode(payload, secret_key, 'HS512', custom_header)
     end
 
-    def save_binary_data_to_active_storage(model_field_instance, data_url, file_name)
-        # Separate base64 string from metadata
-        data = data_url.split(',')
-        base64String = data[-1]
-        content_type = data[0].slice((data[0].index(":")+1)...data[0].index(";")) # Content-Type
-        extension = data[0].slice((data[0].index("/")+1)...data[0].index(";")) # File extension
+    # def save_binary_data_to_active_storage(model_field_instance, data_url, file_name)
+    #     # Separate base64 string from metadata
+    #     data = data_url.split(',')
+    #     base64String = data[-1]
+    #     content_type = data[0].slice((data[0].index(":")+1)...data[0].index(";")) # Content-Type
+    #     extension = data[0].slice((data[0].index("/")+1)...data[0].index(";")) # File extension
 
-        # Extracting the base64 String
-        binary_data = Base64.decode64(base64String)
+    #     # Extracting the base64 String
+    #     binary_data = Base64.decode64(base64String)
 
-        model_field_instance.attach(io: StringIO.new(binary_data), filename: "#{file_name}.#{extension}", content_type: content_type)
-    end
+    #     model_field_instance.attach(io: StringIO.new(binary_data), filename: "#{file_name}.#{extension}", content_type: content_type)
+    # end
 
     private
+
+    def secret_key
+        # Obtain the secret key from the key base
+        Rails.application.credentials.secret_key_base
+    end
 
     def record_not_found_response
         render json: { error: "#{controller_name.classify} not found", message: "RESOURCE NOT FOUND" }, status: :not_found

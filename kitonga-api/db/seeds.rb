@@ -42666,11 +42666,11 @@ case_states = [
 ]
 
 puts "Creating Clients and their cases"
-clients.each do |clnt|
+clients.slice(0, 4).each do |clnt|
   p_client = {**clnt}
   p_client.delete(:id)
   client = Client.create!(p_client)
-  client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 3)
+  client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 5)
 
   puts "Seeding #{client.name}'s cases"
   # puts "Seeding #{clnt[:name]}'s cases"
@@ -42687,19 +42687,19 @@ clients.each do |clnt|
       client_id: client.id,
     })
 
-    payment_information = PaymentInformation.create!(
-      case_id: client_case.id,
-      payment_type: "installment",
-      outstanding: casex["outstanding"],
-      paid_amount: (casex["final_fees"] - casex["outstanding"]),
-      total_fee: casex["final_fees"],
+    # payment_information = PaymentInformation.create!(
+    #   case_id: client_case.id,
+    #   payment_type: "installment",
+    #   outstanding: casex["outstanding"],
+    #   paid_amount: (casex["final_fees"] - casex["outstanding"]),
+    #   total_fee: casex["final_fees"],
 
-      deposit_pay: casex["deposit_pay"], 
-      deposit_fees: casex["deposit_fees"], 
-      final_fees: casex["final_fees"], 
-      final_pay: casex["final_pay"], 
-      deposit: casex["deposit"]
-    )
+    #   deposit_pay: casex["deposit_pay"], 
+    #   deposit_fees: casex["deposit_fees"], 
+    #   final_fees: casex["final_fees"], 
+    #   final_pay: casex["final_pay"], 
+    #   deposit: casex["deposit"]
+    # )
 
     puts "#{client.name} ------> #{client_case.id}"
     # puts "#{clnt[:name]} ------> #{casex["id"]}"
@@ -42767,34 +42767,33 @@ groups = [
   { name: 'Lobbying Team', description: 'Engages in legal advocacy and lobbying' }
 ]
 
-puts "Creating Superuser"
-admin = User.create!({
-    username: 'admin',
-    name: 'Travis Cure',
-    email: 'admin@gmail.com',
-    contact_number: '555-444-3333',
-    address: '789 Oak Rd',
-    password: 'password'
-})
+# puts "Creating Superuser"
+# admin = User.create!({
+#     username: 'admin',
+#     name: 'admin admin',
+#     email: 'admin@gmail.com',
+#     contact_number: '555-444-3333',
+#     address: '789 Oak Rd',
+#     password: 'password'
+# })
 
-# Create admin role
-puts "Create admin role"
-admin_role = Role.create!({
-  name: "ADMIN",
-  description: "Super users"
-})
+# # Create admin role
+# puts "Create admin role"
+# admin_role = Role.create!({
+#   name: "ADMIN",
+#   description: "Super users"
+# })
 
-# Create client role
-puts "Create client role"
-client_role = Role.create!({
-  name: "CLIENT",
-  description: "Clients"
-})
+# # Create client role
+# puts "Create client role"
+# client_role = Role.create!({
+#   name: "CLIENT",
+#   description: "Clients"
+# })
 
-
-# Assign ADMIN Privileges to above admin
-puts "Assign ADMIN Privileges to above admin"
-UserRole.create!({
-  user_id: admin.id,
-  role_id: admin_role.id
-})
+# # Assign ADMIN Privileges to above admin
+# puts "Assign ADMIN Privileges to above admin"
+# UserRole.create!({
+#   user_id: admin.id,
+#   role_id: admin_role.id
+# })
