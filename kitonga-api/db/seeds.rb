@@ -42677,6 +42677,7 @@ clients.slice(0, 4).each do |clnt|
   p_client = {**clnt}
   p_client.delete(:id)
   client = Client.create!(p_client)
+  ClientRole.create! client_id: client.id, role_id: client_role.id
   client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 5)
 
   puts "Seeding #{client.name}'s cases"
@@ -42693,8 +42694,6 @@ clients.slice(0, 4).each do |clnt|
       status: case_states.sample,
       client_id: client.id,
     })
-
-    ClientRole.create! client_id: client.id, role_id: client_role.id
 
     # payment_information = PaymentInformation.create!(
     #   case_id: client_case.id,
@@ -42799,3 +42798,4 @@ UserRole.create!({
   user_id: admin.id,
   role_id: admin_role.id
 })
+

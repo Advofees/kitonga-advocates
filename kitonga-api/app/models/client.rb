@@ -9,4 +9,8 @@ class Client < ApplicationRecord
     has_many :groups, through: :client_groups
 
     has_many :cases, dependent: :destroy
+
+    def self.policy_column_names
+        [ :id, :username, :email ]
+    end
 end

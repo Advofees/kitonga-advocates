@@ -17,7 +17,7 @@ class SessionsController < ApplicationController
     end
     
     def profile
-        render json: pundit_user, status: :ok
+        render json: pundit_user.as_json(except: ["resource_identifiers"]), status: :ok
     end
 
     def access_token(usr, grant_type)

@@ -24,4 +24,8 @@ class User < ApplicationRecord
 
     has_many :hearing_users
     has_many :hearings, through: :hearing_users
+
+    def self.policy_column_names
+        [ :id, :username, :email ]
+    end
 end

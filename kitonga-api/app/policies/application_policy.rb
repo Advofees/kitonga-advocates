@@ -62,12 +62,9 @@ class ApplicationPolicy
           raise ResourceNotFoundException.new("The action your are trying to perform is not registered.")
         end
 
-        record_hash = @record.as_json
+        resource_where_tokens = @record.resource_identifiers
 
-        resource_where_tokens = AccessPolicy.extract_column_names(@record.class)
-                                .map { |col| "krn:#{@record.class.name.downcase}:#{col}:#{record_hash[col]}" }
-
-        action_where_tokens = ["krn:action:id:#{action.id}"]
+        action_where_tokens = ["krn:resourceaction:id:#{action.id}"]
 
         policies = AccessPolicy
                     .select("DISTINCT access_policies.*")
@@ -88,10 +85,7 @@ class ApplicationPolicy
     # Immediately deny access if no policy is attached
     return false if (policies.nil? || policies.empty?)
 
-    current_principals = [
-      @user.authorities.map { |a| a.starts_with?("ROLE") ? Role.to_krn(a) : Group.to_krn(a) },
-      ["id", "username", "email"].map { |identifier| "krn:#{@user.grant == "user" ? "iam" : "client"}:#{identifier}:#{@user.principal["#{identifier}"]}" }
-    ].flatten
+    current_principals = @user.resource_identifiers
     
     # Evaluate each policy
     policies.each do |policy|

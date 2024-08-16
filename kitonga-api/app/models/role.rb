@@ -8,8 +8,8 @@ class Role < ApplicationRecord
 
     before_save :uppercase_name
 
-    def self.to_krn(role_name)
-        "krn:role:name:#{role_name}"
+    def self.policy_column_names
+        [ :id, :name ]
     end
 
     private

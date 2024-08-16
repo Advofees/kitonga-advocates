@@ -7,8 +7,8 @@ class Group < ApplicationRecord
 
     before_save :uppercase_name
 
-    def self.to_krn(group_name)
-        "krn:role:name:#{group_name}"
+    def self.policy_column_names
+        [ :id, :name ]
     end
 
     private

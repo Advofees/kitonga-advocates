@@ -46,4 +46,8 @@ class Case < ApplicationRecord
 
     # Important dates to carry on with the case
     has_many :important_dates, dependent: :destroy
+
+    def self.policy_column_names
+        [ :id, :record, :file_reference, :clients_reference, :status ]
+    end
 end

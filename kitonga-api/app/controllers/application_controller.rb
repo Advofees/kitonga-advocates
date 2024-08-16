@@ -92,12 +92,22 @@ class ApplicationController < ActionController::API
             if payload['grant_type'] == 'user'
                 user = User.find(payload['id'])
                 unless !user
-                    @auth_context = AuthContext.new((user.as_json only: [:username, :id, :name, :email ]), "user", [ user.roles.map(&:name), user.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq)
+                    @auth_context = AuthContext.new(
+                        user.as_json(only: [:username, :id, :name, :email ]),
+                        "user",
+                        [ user.roles.map(&:name), user.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq,
+                        [ user.resource_identifiers, user.roles.map(&:resource_identifiers), user.groups.map(&:resource_identifiers) ].flatten
+                    )
                 end
             elsif payload['grant_type'] == 'client'
                 client = Client.find(payload['id'])
                 unless !client
-                    @auth_context = AuthContext.new((client.as_json only: [:username, :id, :name, :email ]), "client", [ client.roles.map(&:name), client.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq)
+                    @auth_context = AuthContext.new(
+                        client.as_json(only: [:username, :id, :name, :email ]),
+                        "client",
+                        [ client.roles.map(&:name), client.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq,
+                        [ client.resource_identifiers , client.roles.map(&:resource_identifiers), client.groups.map(&:resource_identifiers) ].flatten
+                    )
                 end
             end
         end

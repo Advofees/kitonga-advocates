@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
 import { useSession } from "../hooks/useSession";
 import { InputField } from "../common/InputField";
-import { ScaleButton } from "../common/ScaleButton";
 import { images } from "../../assets/images/images";
 import { Loader } from "../common/Loader";
 import { faHomeLgAlt } from "@fortawesome/free-solid-svg-icons";

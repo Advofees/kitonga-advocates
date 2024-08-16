@@ -1,14 +1,7 @@
 class AccessPolicy < ApplicationRecord
-    # serialize :actions, coder: JSON
-    # serialize :principals, coder: JSON
-    # serialize :resources, coder: JSON
-    # serialize :conditions, coder: JSON
-
+    
     validates :name, presence: true, uniqueness: true
     validates :description, presence: true
-    # validates :actions, presence: true
-    # validates :resources, presence: true
-    # validates :principals, presence: true
     validates :effect, inclusion: { in: %w(Allow Deny), message: "'%{value}' is not a valid effect" }
 
     validate :check_actions
@@ -17,22 +10,21 @@ class AccessPolicy < ApplicationRecord
     validate :check_conditions
 
     def check_conditions
-
     end
 
     def check_actions
-        unless check_emptiness("actions", actions)
+        unless check_emptiness("resourceactions", actions)
             return
         end
 
-        action_pattern = /krn:action:.*:.*\z/
+        action_pattern = /krn:resourceaction:.*:.*\z/
 
         actions.each do |action|
-            unless validate_scheme("actions", action, action_pattern)
+            unless validate_scheme("resourceactions", action, action_pattern)
                 break
             end
 
-            unless entity_exists?("actions", action)
+            unless entity_exists?("resourceactions", action)
                 break
             end
         end
@@ -78,7 +70,7 @@ class AccessPolicy < ApplicationRecord
     def validate_scheme(fld, scheme, pattern)
         
         unless scheme.match(pattern)
-            errors.add(fld.to_sym, "#{fld.capitalize} is an invalid KRN")
+            errors.add(fld.to_sym, "#{scheme} is an invalid KRN")
             return false
         end
 
@@ -105,14 +97,6 @@ class AccessPolicy < ApplicationRecord
         result
       end
 
-    def is_attribute?(entity, attribute)
-        !!AccessPolicy.extract_column_names(entity).include?(attribute)
-    end
-
-    def self.extract_column_names(entity)
-        entity.column_names.filter { |col| !["updated_at", "created_at", "password_digest"].include?(col) } 
-    end
-
     def entity_exists?(flds, krn)
 
         resources = {
@@ -120,7 +104,7 @@ class AccessPolicy < ApplicationRecord
             "case" => Case,
             "client" => Client,
             "group" => Group,
-            "action" => ResourceAction,
+            "resourceaction" => ResourceAction,
             "iam" => User
         }
 
@@ -129,8 +113,8 @@ class AccessPolicy < ApplicationRecord
         entity = resources[resource_type]
 
         if(!!entity)
-            unless is_attribute?(entity, resource_field)
-                errors.add(flds.to_sym, { "valid attributes" => AccessPolicy.extract_column_names(entity)})
+            unless entity.is_policy_attribute?(resource_field)
+                errors.add(flds.to_sym, { "valid attributes" => entity.policy_column_names })
                 return false
             end
 
