@@ -191,7 +191,12 @@ class ApplicationController < ActionController::API
     end
 
     def policy_violation_response(exception)
-        render json: { "status": "POLICY VIOLATION", error: "You are #{exception.message} (#{exception.record&.id})" }, status: 403
+        if exception.record.class.ancestors.include?(ApplicationRecord)
+            error = "You are #{exception.message} (#{exception.record&.id})"
+        else
+            error = "You are not authorized to perform this action."
+        end
+        render json: { "status": "POLICY VIOLATION", error: error }, status: 403
     end
 
     def custom_exception_response(exception)

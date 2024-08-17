@@ -1,36 +1,41 @@
 class UsersController < ApplicationController
+
+    before_action :set_user, only: [:show, :destroy, :update]
+
     def index
-        render json: User.all
+        render json: policy_scope(User)
     end
 
     def brief_users
-        render json: User.all.map { |user| { username: user.username, name: user.name } }
+        render json: policy_scope(User).map { |user| { username: user.username, name: user.name } }
     end
 
     def create
+        authorize User
         render json: User.create!(user_params), status: :created
     end
 
     def show
-        render json: find_user
+        authorize @user
+        render json: @user
     end
 
     def destroy
-        find_user.destroy
+        authorize @user
+        @user.destroy
         head :no_content
     end
 
     def update
-        user = find_user
-        user.update!(user_params)
-        pp user_params
-        render json: user, status: :accepted
+        authorize @user
+        @user.update!(user_params)
+        render json: @user, status: :accepted
     end
 
     private
 
-    def find_user
-        User.find(params[:id])
+    def set_user
+        @user = User.find(params[:id])
     end
 
     def user_params

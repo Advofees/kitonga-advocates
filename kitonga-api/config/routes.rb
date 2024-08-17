@@ -20,9 +20,9 @@ Rails.application.routes.draw do
       get "/current/user", to: "sessions#profile"
       
       scope "authorization" do
-        get "/access/policies", to: "policies#index"
-        get "/access/policies/:id", to: "policies#show"
-        post "/access/policies", to: "policies#create"
+        resources :access_policies
+        get "search/access_policies", to: "access_policies#search"
+
         get "/resource/actions", to: "resource_actions#index"
         get "/resource/actions/:id", to: "resource_actions#show"
         post "/resource/actions", to: "resource_actions#create"
@@ -94,8 +94,9 @@ Rails.application.routes.draw do
         delete "/destroy/multiple", to: "clients#destroy_multiple"
       end
 
-      scope "users" do
-        get "/brief", to: "users#brief_users"
+      scope "iam" do
+        get "brief", to: "users#brief_users"
+        resources :users
       end
 
       scope "parties" do

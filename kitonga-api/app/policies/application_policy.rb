@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 
+module AuthorizationHelper
+  def has_role?(role)
+    @user.present? && @user.authorities.include?(role)
+  end
+
+  def is_admin?
+    has_role?("ROLE_ADMIN")
+  end
+end
+
 class ApplicationPolicy
+  include AuthorizationHelper
+
   attr_reader :user, :record
 
   def initialize(user, record)
@@ -35,10 +47,6 @@ class ApplicationPolicy
 
   def destroy?
     false
-  end
-
-  def has_role?(role)
-    @user.authorities.include?(role)
   end
 
   def repeat_string(str, n = 1)
@@ -106,6 +114,8 @@ class ApplicationPolicy
   end
 
   class Scope
+    include AuthorizationHelper
+
     def initialize(user, scope)
       @user = user
       @scope = scope
