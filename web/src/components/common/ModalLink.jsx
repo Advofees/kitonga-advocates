@@ -2,7 +2,6 @@ import { faClose } from "@fortawesome/free-solid-svg-icons/faClose";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { ScaleButton } from "./ScaleButton";
 import { faAdd } from "@fortawesome/free-solid-svg-icons";
 
 export function ModalLink({

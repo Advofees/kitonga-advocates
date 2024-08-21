@@ -168,7 +168,7 @@ class CasesController < ApplicationController
   end
 
   def create
-    authorize :create?
+    authorize Case
     cs = Case.create!(case_params)
     render json: cs, status: :created
   end
@@ -189,7 +189,7 @@ class CasesController < ApplicationController
   end
 
   def add_installment
-    authorize
+    authorize @casex, :update?
     if @casex.payment_information
       payment_information = @casex.payment_information
       installment = Payment.create!({
@@ -208,6 +208,7 @@ class CasesController < ApplicationController
   end
 
   def create_payment_information
+    authorize @casex, :update?
     if @casex.payment_information
       render json: { message: "Payment Information Exists. Consider performing an update" }, status: 409
     else
