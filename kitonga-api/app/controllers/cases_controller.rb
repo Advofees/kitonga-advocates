@@ -208,7 +208,8 @@ class CasesController < ApplicationController
   end
 
   def create_payment_information
-    authorize @casex, :update?
+    # authorize @casex, :update?
+
     if @casex.payment_information
       render json: { message: "Payment Information Exists. Consider performing an update" }, status: 409
     else
@@ -222,8 +223,6 @@ class CasesController < ApplicationController
         })
         render json: payment_information, status: :created
       else
-        # Extract the down payment params
-        down_payment_params = payment_information_params[:payment]
 
         # Create payment information
         payment_information = PaymentInformation.create!({
@@ -234,13 +233,18 @@ class CasesController < ApplicationController
           total_fee: payment_information_params[:total_fee],
         })
 
-        # Create first payment
-        first_payment = Payment.create!({
-          **down_payment_params,
-          payment_information_id: payment_information.id,
-        })
+        if payment_information_params[:payment]
+          # Extract the down payment params
+          down_payment_params = payment_information_params[:payment]
 
-        update_payment_information(payment_information, first_payment.amount)
+          # Create first payment
+          first_payment = Payment.create!({
+            **down_payment_params,
+            payment_information_id: payment_information.id,
+          })
+
+          update_payment_information(payment_information, first_payment.amount)
+        end
 
         render json: payment_information
       end

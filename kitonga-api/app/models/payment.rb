@@ -1,7 +1,7 @@
 class Payment < ApplicationRecord
 
-    validates :payment_method, inclusion: { in: [ "Mpesa", "Credit Card", "Debit Card", "PayPal", "Stripe", "Apple", "Paypal", "Google Pay", "Bank Transfer", "Cash on Delivery (COD)", "Cryptocurrencies", "Digital Wallets", "Checks", "Gift Cards", "Mobile Billing", "Installment Plans", "Bank Transfers (ACH)", "Wire Transfers", "E-checks",   "Amazon Pay", "Alipay", "WeChat Pay" ] }
-    validates :payment_type, inclusion: { in: ["final", "deposit", "installment"] } 
+    validates :payment_method, inclusion: { in: [ "Cash", "Mpesa", "CreditCard", "DebitCard" ] }
+    validates :payment_type, inclusion: { in: ["final", "deposit", "installment", "full"] } 
 
     # belongs_to :client
     belongs_to :payment_information

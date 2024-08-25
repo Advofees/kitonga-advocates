@@ -1,0 +1,6 @@
+{
+  "effect": "Allow",
+  "principals": ["krn:role:name:ROLE_ADMIN"],
+  "resources": ["krn:case:id:0f589d97-4a4c-456a-a693-d52b6b2d1763"],
+  "actions": ["krn:action:name:ViewCase"]
+}
