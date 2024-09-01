@@ -6,7 +6,7 @@ class ClientsController < ApplicationController
 
     def search_count
         begin
-            render json: { count: policy_scope(Client).where("clients.#{params[:q]}::text ILIKE ?", "%#{params[:v].strip}%").count }
+            render json: { count: policy_scope(Client).where("clients.#{query_params[:q]&.strip}::text ILIKE ?", "%#{query_params[:v]&.strip}%").count }
         rescue ActiveRecord::StatementInvalid => e
             render json: { count: 0 }
         end
@@ -14,7 +14,7 @@ class ClientsController < ApplicationController
 
     def search_clients
         begin
-            render json: policy_scope(Client).where("clients.#{params[:q]}::text ILIKE ?", "%#{params[:v]}%").order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
+            render json: policy_scope(Client).where("clients.#{query_params[:q]}::text ILIKE ?", "%#{query_params[:v]}%").order("created_at DESC").paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
         rescue ActiveRecord::StatementInvalid => e
             render json: []
         end
@@ -46,7 +46,7 @@ class ClientsController < ApplicationController
     end
 
     def index
-        render json: Client.all.order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
+        render json: Client.all.order("created_at DESC").paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
     end
 
     def show

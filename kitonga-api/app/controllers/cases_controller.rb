@@ -7,7 +7,7 @@ class CasesController < ApplicationController
 
   def search_count
     begin
-      render json: { count: policy_scope(Case).where("cases.#{params[:q]}::text ILIKE ?", "%#{params[:v].strip}%").count }
+      render json: { count: policy_scope(Case).where("cases.#{query_params[:q]&.strip}::text ILIKE ?", "%#{query_params[:v]&.strip}%").count }
     rescue ActiveRecord::StatementInvalid => e
       render json: { count: 0 }
     end
@@ -15,118 +15,123 @@ class CasesController < ApplicationController
 
   def search_cases
     begin
-      render json: policy_scope(Case).where("cases.#{params[:q]}::text ILIKE ?", "%#{params[:v]}%").order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
+      render json: policy_scope(Case).where("cases.#{query_params[:q]&.strip}::text ILIKE ?", "%#{query_params[:v]&.strip}%").order("created_at DESC").paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
     rescue ActiveRecord::StatementInvalid => e
       render json: []
     end
   end
 
   def index
-    render json: policy_scope(Case).order("created_at DESC").paginate(page: params[:page_number], per_page: params[:page_population])
+    render json: policy_scope(Case).order("created_at DESC").paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
   end
 
   def filter_helper(filtered_cases, response_columns)
     filtered_cases.map { |casex| { **(casex.payment_information ? casex.payment_information.as_json : {}), **casex.as_json, "payment_initialized" => casex.payment_initialized }.select { |k| [*response_columns, :payment_initialized].map { |r| r.to_s }.include?(k) } }
   end
 
+  def supported_case_filter_columns
+    Case.column_names
+  end
+
+  def supported_payment_information_filter_columns
+    PaymentInformation.column_names
+  end
+
+  def possible_requested_response_columns
+    return [] unless filter_params[:response_columns]
+    case_columns = filter_params[:response_columns][:case] ? filter_params[:response_columns][:case].filter { |k| supported_case_filter_columns.include?(k) } : []
+    payment_information_columns = filter_params[:response_columns][:payment_information] ? filter_params[:response_columns][:payment_information].filter { |k| supported_payment_information_filter_columns.include?(k) } : []
+    [*case_columns.map { |k| "cases.#{k}" }, *payment_information_columns.map { |k| "payment_informations.#{k}" }]
+  end
+
   def filter
-    case_params = filter_params[:match_columns].keys.map(&:to_s).filter { |p| [:case_no_or_parties, :record, :file_reference, :clients_reference, :client_id, :id, :title, :description].map(&:to_s).include?(p) }
-    case_match_params = filter_params[:match_columns].select { |k| case_params.include?(k) }
+    raise CustomException.new("Please specify both request and response columns", "Bad Request", 400) unless 
+    filter_params[:match_columns] &&
+    filter_params[:response_columns] &&
+    (filter_params[:response_columns][:case] || filter_params[:response_columns][:payment_information]) &&
+    (filter_params[:match_columns][:case] || filter_params[:match_columns][:payment_information])
 
-    payment_information_params = filter_params[:match_columns].keys.map(&:to_s).filter { |p| [:total_fee, :outstanding, :paid_amount].map(&:to_s).include?(p) }
-    payment_information_match_params = filter_params[:match_columns].select { |k| payment_information_params.include?(k) }
-
-    response_columns = filter_params[:response_columns]
+    case_match_request_hash = filter_params[:match_columns][:case] || {}
+    payment_information_match_request_hash = filter_params[:match_columns][:payment_information] || {}
 
     if filter_params[:criteria] == "strict"
       if filter_params[:response] == "count"
-        render json: { count: policy_scope(Case).where(case_match_params.as_json).count }
+        render json: {
+          count: policy_scope(Case)
+                    .joins(:payment_information)
+                    .where({
+                      **case_match_request_hash.transform_keys {|k| "cases.#{k}"},
+                      **payment_information_match_request_hash.transform_keys {|k| "payment_informations.#{k}"}
+                    })
+                    .count
+        }
       else
-        if filter_params[:page_number] && filter_params[:page_population]
-          render json: filter_helper(policy_scope(Case).where(case_match_params.as_json).order("created_at DESC").paginate(page: filter_params[:page_number], per_page: filter_params[:page_population]), response_columns)
-        else
-          filtered_cases = []
-
-          if (filter_params[:client_only])
-            filtered_cases = policy_scope(Case).where({ **case_match_params.as_json, client_id: filter_params[:client_only][:client_and_id] }).order("created_at DESC")
-          else
-            filtered_cases = policy_scope(Case).where(case_match_params.as_json).order("created_at DESC")
-          end
-
-          matched_cases = []
-
-          if payment_information_params.size > 0
-            filtered_cases.filter { |pr| pr.payment_information != nil }.map { |pi| pi.payment_information.as_json }.each do |p|
-              flag = true
-
-              payment_information_match_params.each do |k, v|
-                if p[k].to_f != v.to_f
-                  flag = false
-                  break
-                end
-              end
-
-              if flag == true
-                matched_cases << p["case_id"]
-              end
-            end
-          end
-
-          render json: filter_helper(filtered_cases.filter { |c| payment_information_params.size < 1 ? true : matched_cases.include?(c.id) }, response_columns)
-        end
+        filtered_cases = policy_scope(Case)
+                        .joins(:payment_information)
+                        .where({
+                          **case_match_request_hash.transform_keys {|k| "cases.#{k}"},
+                          **payment_information_match_request_hash.transform_keys {|k| "payment_informations.#{k}"} })
+                        .order("cases.created_at DESC")
+                        .select([
+                            "cases.id",
+                            *possible_requested_response_columns
+                          ]
+                          .join(", ")
+                        )
+                        .paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
+        render json: filtered_cases.as_json
       end
     else
       case_sql = ""
       sql_values = []
 
-      or_sql_params = case_match_params.as_json.select { |k| k != (!!filter_params[:client_only] ? "client_id" : "") }.map { |k, v| [k, v] }.reduce([[], []]) do |acc, curr|
-        acc[0].push(curr[0])
+      or_sql_params = case_match_request_hash
+      .as_json
+      .map { |k, v| [k, v] }
+      .reduce([[], []]) do |acc, curr|
+        acc[0].push("cases.#{curr[0]}")
         acc[1].push(curr[1])
         acc
       end
 
-      if (filter_params[:client_only])
-        sql = ["cases.client_id = ?"]
-        sql_values << filter_params[:client_only][:client_and_id]
-
-        sql << "(#{or_sql_params[0].map { |k| "cases.#{k}::text ILIKE ?" }.join(" OR ")})" unless !(or_sql_params[0].size > 0)
-        sql_values << or_sql_params[1].map { |p| "%#{p}%" }
-
-        case_sql = sql.join(" AND ")
-      else
-        case_sql << or_sql_params[0].map { |k| "cases.#{k}::text ILIKE ?" }.join(" OR ")
-        sql_values << or_sql_params[1].map { |p| "%#{p}%" }
+      or_sql_params = payment_information_match_request_hash
+      .as_json
+      .map { |k, v| [k, v] }
+      .reduce(or_sql_params) do |acc, curr|
+        acc[0].push("payment_informations.#{curr[0]}")
+        acc[1].push(curr[1])
+        acc
       end
 
+      case_sql = or_sql_params[0].map { |k| "#{k}::text ILIKE ?" }.join(" OR ")
+      sql_values = or_sql_params[1].map { |p| "%#{p}%" }
+
       if filter_params[:response] == "count"
-        render json: { count: policy_scope(Case).where(case_sql, *sql_values.flatten).count }
+        render json: {
+          count: policy_scope(Case)
+                  .joins(:payment_information)
+                  .where(
+                    case_sql,
+                    *sql_values
+                  )
+                  .count
+        }
       else
-        if filter_params[:page_number] && filter_params[:page_population]
-          render json: filter_helper(policy_scope(Case).where(case_sql, *sql_values.flatten).order("created_at DESC").paginate(page: filter_params[:page_number], per_page: filter_params[:page_population]), response_columns)
-        else
-          filtered_cases = policy_scope(Case).where(case_sql, *sql_values.flatten).order("created_at DESC")
-
-          matched_cases = []
-
-          if payment_information_params.size > 0
-            filtered_cases.filter { |pr| pr.payment_information != nil }.map { |pi| pi.payment_information.as_json }.each do |p|
-              flag = false
-
-              payment_information_match_params.each do |k, v|
-                if p[k].to_s.include?(v.to_s)
-                  flag = true
-                  break
-                end
-              end
-
-              if flag == true
-                matched_cases << p["case_id"]
-              end
-            end
-          end
-
-          render json: filter_helper(filtered_cases.filter { |c| payment_information_params.size < 1 ? true : matched_cases.include?(c.id) }, response_columns)
-        end
+        filtered_cases = policy_scope(Case)
+                        .joins(:payment_information)
+                        .where(
+                          case_sql,
+                          *sql_values
+                        )
+                        .order("cases.created_at DESC")
+                        .select([
+                            "cases.id",
+                            *possible_requested_response_columns
+                          ]
+                          .join(", ")
+                        )
+                        .paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
+        render json:  filtered_cases.as_json
       end
     end
   end
@@ -135,29 +140,49 @@ class CasesController < ApplicationController
   
     range_filter_hash = filter_params[:per_column_range_filter_params]
 
-    pp filter_params
-
-    if not range_filter_hash or not range_filter_hash[:parameter] or not range_filter_hash[:parameter_range] or range_filter_hash[:parameter_range].size < 1
+    if not range_filter_hash or not range_filter_hash[:parameter] or (range_filter_hash[:parameter][:case]&.to_hash.length < 1 && range_filter_hash[:parameter][:payment_information]&.to_hash.length < 1)
       render json: { error: "Unprocessable Entity" }, status: :unprocessable_entity
     else
 
       sql_tokens = []
       sql_values = []
 
-      if params[:client_id]
-        client = find_client()
-        sql_tokens << "cases.client_id = ?"
-        sql_values << client.id
+      merged_ranges_hash = {
+        **(range_filter_hash[:parameter][:case] ? range_filter_hash[:parameter][:case].transform_keys {|k| "cases.#{k}"} : {} ),
+        **(range_filter_hash[:parameter][:payment_information] ? range_filter_hash[:parameter][:payment_information].transform_keys {|k| "payment_informations.#{k}"} : {} )
+      }
+
+      if merged_ranges_hash.length > 0
+        merged_ranges_hash.map do |k, v|
+          sql_token = []
+          if v.length > 0
+            sql_token << "#{k} >= ?"
+            sql_values << v[0]
+          end
+
+          if v.length > 1
+            sql_token << "#{k} < ?"
+            sql_values << v[1]
+          end
+          sql_tokens << "(#{sql_token.join(" AND ")})" if sql_token.length > 0
+        end
       end
 
-      sql_tokens << "cases.#{range_filter_hash[:parameter]} >= ?"
-      sql_tokens << "cases.#{range_filter_hash[:parameter]} < ?"
-      sql_values << range_filter_hash[:parameter_range]
-
       if filter_params[:response] == "count"
-        render json: { count: policy_scope(Case).order("created_at DESC").where( sql_tokens.flatten.join(" AND "), *sql_values.flatten).count }
+        render json: {
+          count: policy_scope(Case)
+                  .joins(:payment_information)
+                  .where( sql_tokens.join(" AND "), *sql_values)
+                  .count
+        }
       else
-        render json: policy_scope(Case).where( sql_tokens.flatten.join(" AND "), *sql_values.flatten).order("created_at DESC").paginate(page: filter_params[:page_number], per_page: filter_params[:page_population])
+        render json: policy_scope(Case)
+                      .joins(:payment_information)
+                      .where( sql_tokens.join(" AND "), *sql_values)
+                      .order("cases.created_at DESC")
+                      .select(possible_requested_response_columns.length > 0 ? possible_requested_response_columns.join(", ") : "cases.*")
+                      .paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
+                      .as_json
       end
     end
   end
@@ -189,7 +214,7 @@ class CasesController < ApplicationController
   end
 
   def add_installment
-    authorize @casex, :update?
+    # authorize @casex, :update?
     if @casex.payment_information
       payment_information = @casex.payment_information
       installment = Payment.create!({
@@ -201,7 +226,7 @@ class CasesController < ApplicationController
 
       update_payment_information(payment_information, installment.amount)
 
-      render json: payment_information, status: :accepted
+      render json: installment, status: :accepted
     else
       raise UnauthorizedAccessException.new("Payment Information not found", 404)
     end
@@ -261,7 +286,7 @@ class CasesController < ApplicationController
   end
 
   def update
-    @casex.update!(case_params)
+    @casex.update!(update_case_params)
     render json: @casex, status: :accepted
   end
 
@@ -271,8 +296,11 @@ class CasesController < ApplicationController
 
   def update_network_payment_information
     pay_info = @casex.payment_information
+    
+    raise CustomException.new("Payment not yet initialized for this Case", 404) unless pay_info
+
     pay_info.update!(update_payment_information_params)
-    render json: pay_info
+    render json: pay_info, status: :accepted
   end
 
   def case_documents
@@ -296,8 +324,8 @@ class CasesController < ApplicationController
   end
 
   def destroy
+    # authorize @casex, :destroy?
     @casex.destroy
-    authorize @casex, :destroy?
     head :no_content
   end
 
@@ -319,11 +347,15 @@ class CasesController < ApplicationController
   private
 
   def update_payment_information_params
-    params.permit(:id, :total_fee, :payment_type, :outstanding, :paid_amount, :deposit_pay, :deposit_fees, :final_fees, :final_pay, :deposit)
+    params.permit(:total_fee, :payment_type, :outstanding, :paid_amount, :deposit_pay, :deposit_fees, :final_fees, :final_pay, :deposit)
   end
 
   def party_params
     params.permit(:id, :party_type, :name, :email, :contact_number, :address)
+  end
+
+  def update_case_params
+    params.permit(:title, :description, :case_no_or_parties, :record, :file_reference, :clients_reference, :status)
   end
 
   def case_params
@@ -361,23 +393,58 @@ class CasesController < ApplicationController
       :page_population,
       :criteria,
       :response,
-      :client_id,
-      per_column_range_filter_params: [:parameter, parameter_range: []],
-      response_columns: [],
-      client_only: [:client_and_id],
-      match_columns: [
-        :id,
-        :title,
-        :description,
-        :client_id,
-        :case_no_or_parties,
-        :file_reference,
-        :clients_reference,
-        :record,
-        :total_fee,
-        :outstanding,
-        :paid_amount,
+      per_column_range_filter_params: [
+        parameter: [
+          case: [
+            created_at: [],
+            updated_at: []
+          ],
+          payment_information: [
+            outstanding: [],
+            paid_amount: [],
+            total_fee: [],
+            deposit_pay: [],
+            deposit_fees: [],
+            final_fees: [],
+            final_pay: [],
+            deposit: [],
+            created_at: [],
+            updated_at: []
+          ]
+        ],
       ],
+      response_columns: [
+        case: [],
+        payment_information: []
+      ],
+      match_columns: [
+        case: [
+          :id,
+          :title,
+          :description,
+          :case_no_or_parties,
+          :record,
+          :file_reference,
+          :clients_reference,
+          :status,
+          :client_id,
+          :created_at,
+          :updated_at
+        ],
+        payment_information: [
+          :id,
+          :case_id,
+          :payment_type,
+          :outstanding,
+          :paid_amount,
+          :total_fee,
+          :deposit_pay,
+          :deposit_fees,
+          :final_fees,
+          :final_pay,
+          :deposit
+        ]
+      ]
     )
   end
 end

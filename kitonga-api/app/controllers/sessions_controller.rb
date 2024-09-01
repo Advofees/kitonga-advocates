@@ -1,6 +1,10 @@
 class SessionsController < ApplicationController
 
-    skip_before_action :authenticate, only: [:login]
+    skip_before_action :authenticate, only: [:login, :test_qs]
+
+    def test_qs
+        render json: pagination_params
+    end
     
     def login
         user = find_principal
@@ -55,5 +59,5 @@ class SessionsController < ApplicationController
 
     def session_params
         params.permit(:identity, :password, :grant_type)
-    end 
+    end
 end

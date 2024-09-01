@@ -18,6 +18,8 @@ Rails.application.routes.draw do
   scope "api" do
     scope "v1" do
       get "/current/user", to: "sessions#profile"
+
+      get "test/search", to: "sessions#test_qs"
       
       scope "authorization" do
         resources :access_policies
@@ -31,14 +33,16 @@ Rails.application.routes.draw do
       scope "stats" do
         get "/cases/count", to: "cases#count"
         get "/clients/count", to: "clients#count"
-        get "/search/cases/count/:q/:v", to: "cases#search_count"
-        get "/search/clients/count/:q/:v", to: "clients#search_count"
+        get "/search/cases/count", to: "cases#search_count"
+        get "/search/clients/count", to: "clients#search_count"
         get "/clients/:id/cases/status/tally", to: "clients#cases_status_tally"
       end
 
       scope "pages" do
-        get "/cases/:page_number/:page_population", to: "cases#index"
-        get "/clients/:page_number/:page_population", to: "clients#index"
+        get "/cases/:page_number/:page_population", to: "cases#index" #v1
+        get "/cases", to: "cases#index" #v2
+        get "/clients/:page_number/:page_population", to: "clients#index" #v1
+        get "/clients", to: "clients#index" #v2
       end
 
       scope 'dashboard' do
@@ -49,8 +53,10 @@ Rails.application.routes.draw do
       end
 
       scope "search" do
-        get "/cases/:q/:v/:page_number/:page_population", to: "cases#search_cases"
-        get "/clients/:q/:v/:page_number/:page_population", to: "clients#search_clients"
+        get "/cases/:q/:v/:page_number/:page_population", to: "cases#search_cases" #v1
+        get "/cases", to: "cases#search_cases" #v2
+        get "/clients/:q/:v/:page_number/:page_population", to: "clients#search_clients" #v1
+        get "/clients", to: "clients#search_clients" #v2
       end
 
       scope "filter_pages" do
@@ -59,11 +65,15 @@ Rails.application.routes.draw do
       end
 
       scope "filter" do
+        post "cases", to: "cases#filter"
+        post "range/cases", to: "cases#range_filter"
+
         post "/cases/:criteria", to: "cases#filter"
         post "/clients/:criteria", to: "clients#filter"
         post "/filter/cases/count/:q/:v", to: "cases#filter"
         post "/range/cases/:response", to: "cases#range_filter"
-        post "/range/cases/:client_id/:response/:page_number/:page_population", to: "cases#range_filter"
+        post "/range/cases/:client_id/:response/:page_number/:page_population", to: "cases#range_filter" #v1
+        # post "/range/cases/:client_id/:response/:page_number/:page_population", to: "cases#range_filter" #v2
         post "/range/cases/:client_id/:response", to: "cases#range_filter"
       end
 

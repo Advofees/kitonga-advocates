@@ -202,4 +202,26 @@ class ApplicationController < ActionController::API
     def custom_exception_response(exception)
         render json: { error: exception.message, status: exception.status }, status: exception.code
     end
+
+    def query_params
+        params.permit(:q, :v, :page_number, :page_population)
+    end
+
+    def pagination_params
+        {
+            page_number: parse_integer_param(params[:page_number], 1, ->(x) { x > 0 }),
+            page_population: parse_integer_param(params[:page_population] , 1, ->(x) { x > 0 })
+        }
+    end
+
+    def parse_integer_param(v, default = 0, predicate = ->(x) { true })
+        return default unless v
+        begin
+            new_value = v.to_i
+            return default unless predicate.call(new_value)
+            new_value
+        rescue StandardError => e
+            default
+        end
+    end
 end

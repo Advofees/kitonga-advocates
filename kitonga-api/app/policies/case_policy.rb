@@ -5,7 +5,7 @@ class CasePolicy < ApplicationPolicy
   end
 
   def create?
-    resolve_access?("CreateCase")
+    is_admin?
   end
 
   def delete?
