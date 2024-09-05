@@ -23,11 +23,23 @@ Rails.application.routes.draw do
       
       scope "authorization" do
         resources :access_policies
+        get "/access_policies/stats/count", to: "access_policies#count"
         get "search/access_policies", to: "access_policies#search"
 
-        get "/resource/actions", to: "resource_actions#index"
-        get "/resource/actions/:id", to: "resource_actions#show"
-        post "/resource/actions", to: "resource_actions#create"
+        scope "policy_search" do
+          get "users", to: "users#policy_columns_based_search"
+          get "clients", to: "clients#policy_columns_based_search"
+          get "roles", to: "roles#policy_columns_based_search"
+          get "groups", to: "groups#policy_columns_based_search"
+          get "resource_actions", to: "resource_actions#policy_columns_based_search"
+          get "cases", to: "cases#policy_columns_based_search"
+        end
+
+        get "/resource_actions", to: "resource_actions#index"
+        get "/resource_actions/:id", to: "resource_actions#show"
+        post "/resource_actions", to: "resource_actions#create"
+        delete "/resource_actions/:id", to: "resource_actions#destroy"
+        get "/resource_actions/stats/count", to: "resource_actions#count"
       end
 
       scope "stats" do
@@ -46,10 +58,11 @@ Rails.application.routes.draw do
       end
 
       scope 'dashboard' do
-        get "/deep/search/:q", to: "dashboard#deep_search"
+        get "/deep/search", to: "dashboard#deep_search"
         get "/cases/per/client", to: "dashboard#cases_per_client"
         get "/counts", to: "dashboard#data_counts"
-        get "/cases/first_10_most_recent_cases", to: "dashboard#first_10_most_recent_cases"
+        get "/cases/first_6_most_recent_cases", to: "dashboard#first_6_most_recent_cases"
+        get "/cases/tally/status", to: "dashboard#cases_status_tally"
       end
 
       scope "search" do

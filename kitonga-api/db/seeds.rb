@@ -42673,12 +42673,12 @@ client_role = Role.create!({
 })
 
 puts "Creating Clients and their cases"
-clients.slice(0, 4).each do |clnt|
+clients.slice(0, 6).each do |clnt|
   p_client = {**clnt}
   p_client.delete(:id)
   client = Client.create!(p_client)
   ClientRole.create! client_id: client.id, role_id: client_role.id
-  client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 5)
+  client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 20)
 
   puts "Seeding #{client.name}'s cases"
   # puts "Seeding #{clnt[:name]}'s cases"
@@ -42695,19 +42695,19 @@ clients.slice(0, 4).each do |clnt|
       client_id: client.id,
     })
 
-    # payment_information = PaymentInformation.create!(
-    #   case_id: client_case.id,
-    #   payment_type: "installment",
-    #   outstanding: casex["outstanding"],
-    #   paid_amount: (casex["final_fees"] - casex["outstanding"]),
-    #   total_fee: casex["final_fees"],
+    payment_information = PaymentInformation.create!(
+      case_id: client_case.id,
+      payment_type: ["full", "installment"].sample,
+      outstanding: casex["outstanding"],
+      paid_amount: (casex["final_fees"] - casex["outstanding"]),
+      total_fee: casex["final_fees"],
 
-    #   deposit_pay: casex["deposit_pay"], 
-    #   deposit_fees: casex["deposit_fees"], 
-    #   final_fees: casex["final_fees"], 
-    #   final_pay: casex["final_pay"], 
-    #   deposit: casex["deposit"]
-    # )
+      deposit_pay: casex["deposit_pay"], 
+      deposit_fees: casex["deposit_fees"], 
+      final_fees: casex["final_fees"], 
+      final_pay: casex["final_pay"], 
+      deposit: casex["deposit"]
+    )
 
     puts "#{client.name} ------> #{client_case.id}"
     # puts "#{clnt[:name]} ------> #{casex["id"]}"
@@ -42798,4 +42798,3 @@ UserRole.create!({
   user_id: admin.id,
   role_id: admin_role.id
 })
-

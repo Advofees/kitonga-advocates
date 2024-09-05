@@ -1,4 +1,9 @@
 class RolesController < ApplicationController
+
+    def policy_columns_based_search
+        render json: Role.policy_columns_based_search(Role, params[:q])
+    end
+
     def index
         render json: Role.all
     end

@@ -1,5 +1,9 @@
 class ClientsController < ApplicationController
 
+    def policy_columns_based_search
+        render json: Client.policy_columns_based_search(Client, params[:q])
+    end
+
     def count
         render json: { count: Client.count }
     end
@@ -38,7 +42,7 @@ class ClientsController < ApplicationController
     end
 
     def cases_status_tally
-        render json: find_client.cases.map(&:status).tally
+        render json: policy_scope(Case).where(client_id: params[:id]).select("status").map(&:status).tally
     end
 
     def all_clients
@@ -61,7 +65,7 @@ class ClientsController < ApplicationController
 
     def update
         client = find_client
-        client.update!(client_params)
+        client.update!(update_client_params)
         render json: client, status: 200
     end
 
@@ -78,17 +82,16 @@ class ClientsController < ApplicationController
     
     private
 
-    # def client_params
-    #     # params.permit(client_data: [:name, :email, :contact_number, :address, :case_details, :is_prime ], payment_data: [:amount, :method, :payment_type, :receipt ], case_data: [:title, :description, :case_number, :payment_type, :deposit_fee, :total_amount, :status, attached_documents: [:title, :description, :dataUrl, :mime]])
-    #     params.permit(:name, :username, :email, :contact_number, :address)
-    # end
-
     def bulk_destruction_ids
         params.permit(client_ids: [])
     end
 
     def find_client
         policy_scope(Client).find(params[:id])
+    end
+
+    def update_client_params
+        params.permit(:name, :username, :email, :contact_number, :address, :password)
     end
 
     def client_params

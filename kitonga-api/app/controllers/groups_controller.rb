@@ -1,5 +1,9 @@
 class GroupsController < ApplicationController
 
+    def policy_columns_based_search
+        render json: Group.policy_columns_based_search(Group, params[:q])
+    end
+
     def index
         render json: Group.all
     end

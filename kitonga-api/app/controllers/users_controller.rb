@@ -2,6 +2,10 @@ class UsersController < ApplicationController
 
     before_action :set_user, only: [:show, :destroy, :update]
 
+    def policy_columns_based_search
+        render json: User.policy_columns_based_search(User, params[:q])
+    end
+
     def index
         render json: policy_scope(User)
     end

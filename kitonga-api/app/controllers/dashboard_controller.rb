@@ -1,5 +1,9 @@
 class DashboardController < ApplicationController
 
+    def cases_status_tally
+        render json: policy_scope(Case).all.select("status").map(&:status).tally
+    end
+
     def cases_per_client
         render json: Client.all.map { |client| { name: client.name, cases: client.cases.size }} # Case.where(client_id: client.id).count
     end
@@ -8,15 +12,20 @@ class DashboardController < ApplicationController
         render json: {
             cases: Case.count,
             clients: Client.count,
+            users: User.count
         }
     end
 
-    def first_10_most_recent_cases
-        render json: policy_scope(Case).order("created_at DESC").limit(10)
+    def first_6_most_recent_cases
+        render json: policy_scope(Case).order("created_at DESC").select("id, title, status, created_at, record").limit(6).as_json
     end
 
     def deep_search
-        render json: { cases: deep_case_search(params[:q]), clients: deep_client_search(params[:q]) }
+        if params[:q]
+            render json: { cases: deep_case_search(params[:q]), clients: deep_client_search(params[:q]) }
+        else
+            render json: {cases: [], clients: []} 
+        end
     end
 
     def deep_case_search(q)

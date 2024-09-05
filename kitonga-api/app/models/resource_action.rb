@@ -3,6 +3,10 @@ class ResourceAction < ApplicationRecord
 
     validate :check_spaces
 
+    def self.policy_column_names
+        [:id, :name]
+    end
+
     private
 
     def check_spaces

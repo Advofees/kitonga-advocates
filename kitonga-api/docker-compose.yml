@@ -43,7 +43,7 @@ services:
       - POSTGRES_USER=advoc
       - POSTGRES_PASSWORD=advoc
     volumes:
-      - postgres-data:/var/lib
+      - postgresql-data:/var/lib
     networks:
       - advoc_network
 
@@ -51,12 +51,12 @@ networks:
   advoc_network: {}
 
 volumes:
-  postgres-data:
+  postgresql-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ./dev-database/data/postgres
+      device: ./dev-database/data/postgresql
   # mongo-data:
   #   driver: local
   #   driver_opts:

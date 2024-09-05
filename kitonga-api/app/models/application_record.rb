@@ -5,8 +5,17 @@ class ApplicationRecord < ActiveRecord::Base
 
   attribute :id, :uuid, default: 'gen_random_uuid()'
 
+  def self.policy_columns_based_search(klass, q)
+    policy_columns = klass.policy_column_names.map(&:to_s)
+    klass.where(policy_columns.map { |col| "#{klass.table_name}.#{col}::text ILIKE ?" }.join(" OR "), *policy_columns.map { "%#{q}%" }).select(policy_columns.join(", ")).as_json
+  end
+
   def self.policy_column_names
     [ :id ]
+  end
+
+  def self.test
+    self.class
   end
 
   def self.is_policy_attribute?(_attr)
