@@ -27,16 +27,12 @@ Rails.application.routes.draw do
         get "search/access_policies", to: "access_policies#search"
 
         scope "policy_search" do
-          get "users", to: "users#policy_columns_based_search"
-          get "clients", to: "clients#policy_columns_based_search"
-          get "roles", to: "roles#policy_columns_based_search"
-          get "groups", to: "groups#policy_columns_based_search"
-          get "resource_actions", to: "resource_actions#policy_columns_based_search"
-          get "cases", to: "cases#policy_columns_based_search"
+          get ":resource", to: "access_policies#search_resources"
         end
 
         get "/resource_actions", to: "resource_actions#index"
         get "/resource_actions/:id", to: "resource_actions#show"
+        patch "/resource_actions/:id", to: "resource_actions#update"
         post "/resource_actions", to: "resource_actions#create"
         delete "/resource_actions/:id", to: "resource_actions#destroy"
         get "/resource_actions/stats/count", to: "resource_actions#count"

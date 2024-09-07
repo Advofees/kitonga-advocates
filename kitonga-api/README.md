@@ -83,3 +83,5 @@
 - **Ethics Committee**: Ensures ethical conduct within the organization
 - **Public Relations**: Manages public image and communication
 - **Lobbying Team**: Engages in legal advocacy and lobbying
+
+https://youtu.be/FbFi8PNzohs

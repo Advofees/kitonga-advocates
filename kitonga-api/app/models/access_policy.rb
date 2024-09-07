@@ -1,6 +1,7 @@
 class AccessPolicy < ApplicationRecord
     
     validates :name, presence: true, uniqueness: true
+    validate :check_spaces
     validates :description, presence: true
     validates :effect, inclusion: { in: %w(Allow Deny), message: "'%{value}' is not a valid effect" }
 
@@ -8,6 +9,10 @@ class AccessPolicy < ApplicationRecord
     validate :check_principals
     validate :check_resources
     validate :check_conditions
+
+    def check_spaces
+        errors.add(:name, "can't contain spaces") if name&.match?(/\s+/)
+    end
 
     def check_conditions
     end
@@ -95,11 +100,10 @@ class AccessPolicy < ApplicationRecord
           result = strings.join("")
         end
         result
-      end
+    end
 
-    def entity_exists?(flds, krn)
-
-        resources = {
+    def self.resources
+        {
             "role" => Role,
             "case" => Case,
             "client" => Client,
@@ -107,10 +111,13 @@ class AccessPolicy < ApplicationRecord
             "resourceaction" => ResourceAction,
             "iam" => User
         }
+    end
+
+    def entity_exists?(flds, krn)
 
         _, resource_type, resource_field, resource_field_value = krn.split(':')
 
-        entity = resources[resource_type]
+        entity = AccessPolicy.resources[resource_type]
 
         if(!!entity)
             unless entity.is_policy_attribute?(resource_field)

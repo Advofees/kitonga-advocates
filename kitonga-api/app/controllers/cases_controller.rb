@@ -1,9 +1,5 @@
 class CasesController < ApplicationController
-  before_action :set_case, only: [:payment_information, :create_payment_information, :add_party, :add_installment, :update, :payment_information, :update_network_payment_information, :case_documents, :hearings, :important_dates, :tasks, :parties, :destroy, :show]
-
-  def policy_columns_based_search
-    render json: Case.policy_columns_based_search(Case, params[:q])
-  end
+  before_action :set_case, only: [:payment_information, :create_payment_information, :add_party, :add_installment, :update, :payment_information, :update_network_payment_information, :case_documents, :hearings, :important_dates, :tasks, :parties, :destroy, :show] 
 
   def count
     render json: { count: policy_scope(Case).count }

@@ -19,8 +19,12 @@ class ResourceActionsController < ApplicationController
     render json: ResourceAction.find(params[:id])
   end
 
+  def update
+    render json: ResourceAction.find(params[:id]).update!(resource_action_params), status: :accepted
+  end
+
   def create
-    render json: ResourceAction.create!(resource_action_params)
+    render json: ResourceAction.create!(resource_action_params), status: :created
   end
 
   def destroy

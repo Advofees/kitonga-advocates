@@ -3,6 +3,18 @@ class AccessPoliciesController < ApplicationController
     skip_before_action :authenticate, only: [:index, :show, :search]
     before_action :set_access_policy, only: [ :show, :destroy, :update ]
 
+    def search_resources
+        klass = AccessPolicy.resources[params[:resource]]
+        to_filter = params[:except] || ""
+        if klass
+            render json: klass.policy_columns_based_search(klass, params[:q])
+        elsif params[:resource] == "all"
+            render json: AccessPolicy.resources.select { |k| !to_filter.split(",").include?(k) }.map { |k, klass| klass.policy_columns_based_search(klass, params[:q]).map { |result_hash| {**result_hash, "entity" => k } } }.flatten
+        else
+            render json: []
+        end
+    end
+
     def count
         render json: { count: AccessPolicy.count }
     end
