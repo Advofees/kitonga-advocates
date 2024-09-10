@@ -1,5 +1,5 @@
 class ResourceAction < ApplicationRecord
-    validates :name, uniqueness: true, presence: true
+    validates :name, presence: true, uniqueness: true
 
     validate :check_spaces
 

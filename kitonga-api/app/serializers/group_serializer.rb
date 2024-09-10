@@ -1,5 +1,3 @@
 class GroupSerializer < ActiveModel::Serializer
-  attributes :id, :name, :description
-  has_many :roles
-  has_many :users
+  attributes :id, :name, :description, :created_at, :updated_at
 end

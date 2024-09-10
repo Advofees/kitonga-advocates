@@ -1,6 +1,6 @@
 class AccessPoliciesController < ApplicationController
 
-    skip_before_action :authenticate, only: [:index, :show, :search]
+    # skip_before_action :authenticate, only: [:index, :show, :search]
     before_action :set_access_policy, only: [ :show, :destroy, :update ]
 
     def search_resources
@@ -16,34 +16,38 @@ class AccessPoliciesController < ApplicationController
     end
 
     def count
-        render json: { count: AccessPolicy.count }
+        render json: { count: policy_scope(AccessPolicy).count }
     end
 
     def index
-        render json: policy_scope(AccessPolicy)
+        render json: policy_scope(AccessPolicy).order("created_at DESC").paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
     end
 
     def show
-        # authorize @policy, :view?
+        authorize @policy, :view?
+
         render json: @policy
     end
 
     def create
-        #authorize AccessPolicy
+        authorize AccessPolicy, :create?
+
         render json: AccessPolicy.create!(access_policy_params)
     end
 
     def update
-        # authorize @policy, :update?
+        authorize @policy, :update?
+
         render json: @policy.update!(access_policy_params)
     end
 
     def search
-        render json: policy_scope(AccessPolicy).where("name ILIKE ?", "%#{params[:q]}%")
+        render json: policy_scope(AccessPolicy).where("name ILIKE ?", "%#{params[:q]}%").select("id, name, description, created_at, updated_at, effect").as_json
     end
 
     def destroy
-        # authorize @policy, :destroy?
+        authorize @policy, :destroy?
+
         @policy.destroy
         head :no_content
     end

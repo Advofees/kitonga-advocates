@@ -67,12 +67,12 @@ class ApplicationPolicy
         action = ResourceAction.find_by name: desired_action
 
         unless action
-          raise ResourceNotFoundException.new("The action your are trying to perform is not registered.")
+          raise ResourceNotFoundException.new("The action #{desired_action} your are trying to perform is not registered.")
         end
 
         resource_where_tokens = @record.resource_identifiers
 
-        action_where_tokens = ["krn:resourceaction:id:#{action.id}"]
+        action_where_tokens = action.resource_identifiers
 
         policies = AccessPolicy
                     .select("DISTINCT access_policies.*")
@@ -98,6 +98,8 @@ class ApplicationPolicy
     # Evaluate each policy
     policies.each do |policy|
       return false if deny_access?(policy, current_principals)
+    end
+    policies.each do |policy|
       return true if allow_access?(policy, current_principals)
     end
     

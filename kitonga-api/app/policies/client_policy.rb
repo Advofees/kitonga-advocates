@@ -5,7 +5,7 @@ class ClientPolicy < ApplicationPolicy
   end
 
   def create?
-    is_admin? || resolve_access?("CreateClient")
+    is_admin?
   end
 
   def delete?
@@ -13,15 +13,19 @@ class ClientPolicy < ApplicationPolicy
   end
 
   def show?
-    is_admin? || resolve_access?("ViewClient")
+    is_admin? || @record.user_id == @user.principals["id"]
   end 
 
   def destroy?
-    is_admin? || resolve_access?("DestroyClient")
+    is_admin?
+  end
+
+  def destroy_multiple?
+    destroy?
   end
 
   def update?
-    is_admin? || resolve_access?("UpdateClient")
+    is_admin?
   end
 
   class Scope < ApplicationPolicy::Scope

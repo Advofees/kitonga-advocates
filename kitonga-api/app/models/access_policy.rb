@@ -2,6 +2,7 @@ class AccessPolicy < ApplicationRecord
     
     validates :name, presence: true, uniqueness: true
     validate :check_spaces
+    validate :only_letters_hyphens_and_underscores
     validates :description, presence: true
     validates :effect, inclusion: { in: %w(Allow Deny), message: "'%{value}' is not a valid effect" }
 
@@ -12,6 +13,10 @@ class AccessPolicy < ApplicationRecord
 
     def check_spaces
         errors.add(:name, "can't contain spaces") if name&.match?(/\s+/)
+    end
+
+    def only_letters_hyphens_and_underscores
+        errors.add(:name, "can only contain letters, hyphens, and underscores") if name&.match?(/[^a-zA-Z_-]+/)
     end
 
     def check_conditions

@@ -75,28 +75,8 @@ ActiveRecord::Schema[7.2].define(version: 2024_08_15_074123) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "client_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "client_id"
-    t.uuid "group_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "client_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "client_id"
-    t.uuid "role_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "clients", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "group"
-    t.string "name"
-    t.string "username"
-    t.string "email"
-    t.string "address"
-    t.string "contact_number"
-    t.string "password_digest", default: "password"
+    t.uuid "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

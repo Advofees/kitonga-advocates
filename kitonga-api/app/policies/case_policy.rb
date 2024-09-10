@@ -1,11 +1,51 @@
 class CasePolicy < ApplicationPolicy
 
+  def add_party?
+    resolve_access?("AddParty")
+  end
+
+  def add_installment?
+    resolve_access?("AddInstallment")
+  end
+
+  def initialize_payment_information?
+    resolve_access?("InitializePaymentInformation")
+  end
+
+  def view_payment_information?
+    resolve_access?("ViewPaymentInformation")
+  end
+
+  def update_payment_information?
+    resolve_access?("UpdatePaymentInformation")
+  end
+
+  def view_documents?
+    resolve_access?("ViewDocuments")
+  end
+
+  def view_hearings?
+    resolve_access?("ViewHearings")
+  end
+
+  def view_important_dates?
+    resolve_access?("ViewImportantDates")
+  end
+
+  def view_tasks?
+    resolve_access?("ViewTasks")
+  end
+
+  def view_parties?
+    resolve_access?("ViewParties")
+  end
+
   def view?
     show?
   end
 
   def create?
-    is_admin?
+    resolve_access?("CreateCase")
   end
 
   def delete?
@@ -27,10 +67,11 @@ class CasePolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     # NOTE: Be explicit about which records you allow access to!
     def resolve
-      if @user&.grant == 'user'
-        is_admin? ? scope.all : scope.joins(:user_cases).where(user_cases: { user_id: @user.principal["id"] })
-      elsif(@user&.grant == 'client')
-        scope.where(client_id: @user.principal["id"])
+      if is_admin?
+        scope.all
+      elsif Client.exists?(user_id: @user.principal["id"])
+        client = Client.find_by(user_id: @user.principal["id"])
+        scope.where(client_id: client.id)
       else
         scope.none
       end

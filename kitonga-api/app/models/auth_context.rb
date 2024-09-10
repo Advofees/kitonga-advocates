@@ -1,10 +1,9 @@
 class AuthContext
 
-    attr_accessor :principal, :grant, :authorities, :resource_identifiers
+    attr_accessor :principal, :authorities, :resource_identifiers
 
-    def initialize(principal, grant, authorities, resource_identifiers)
+    def initialize(principal, authorities, resource_identifiers)
         @principal = principal
-        @grant = grant
         @authorities = authorities
         @resource_identifiers = resource_identifiers
     end

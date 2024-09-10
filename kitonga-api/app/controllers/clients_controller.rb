@@ -1,81 +1,109 @@
 class ClientsController < ApplicationController
 
-    def policy_columns_based_search
-        render json: Client.policy_columns_based_search(Client, params[:q])
+    before_action :set_client, only: [:show, :update, :destroy]
+
+    def client_user_fields
+        ["name", "username", "email", "contact_number", "address", "is_admin"]
     end
 
-    def count
-        render json: { count: Client.count }
+    def prefixed_client_user_fields
+        client_user_fields.map { |k| "users.#{k}" }
     end
 
-    def search_count
+    def flat_client_fields
+        ["clients.id", *prefixed_client_user_fields, "clients.created_at", "clients.updated_at"]
+    end
+
+    def search_all_clients
         begin
-            render json: { count: policy_scope(Client).where("clients.#{query_params[:q]&.strip}::text ILIKE ?", "%#{query_params[:v]&.strip}%").count }
-        rescue ActiveRecord::StatementInvalid => e
-            render json: { count: 0 }
-        end
-    end
+            render json: policy_scope(Client)
+                .joins(:user)
+                .where("users.username::text ILIKE ? OR users.name::text ILIKE ? OR users.email::text ILIKE ?", "%#{query_params[:q]}%", "%#{query_params[:q]}%", "%#{query_params[:q]}%")
+                .select(["clients.id, users.username, users.name, users.email"].join(", "))
+                .as_json
 
-    def search_clients
-        begin
-            render json: policy_scope(Client).where("clients.#{query_params[:q]}::text ILIKE ?", "%#{query_params[:v]}%").order("created_at DESC").paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
         rescue ActiveRecord::StatementInvalid => e
             render json: []
         end
     end
 
-    def filter
-        if filter_params[:criteria] == "strict"
-            render json: policy_scope(Client).where(filter_params[:match_columns]).order("created_at DESC")
+    def search
+        if params[:response] == "count"
+            begin
+                render json: {
+                    count: policy_scope(Client)
+                    .joins(:user)
+                    .where("users.#{query_params[:q]&.strip}::text ILIKE ?", "%#{query_params[:v]&.strip}%")
+                    .count
+                }
+            rescue ActiveRecord::StatementInvalid => e
+                render json: { count: 0 }
+            end
         else
-            if filter_params[:match_columns]&.keys.length > 0
-                client_tokens = filter_params[:match_columns].keys.reduce([]) do |acc, curr|
-                    acc.push("clients.#{curr}::text ILIKE ?")
-                    acc
-                end
-            
-                render json: policy_scope(Client).where("#{client_tokens.join(" OR ")}", *filter_params[:match_columns]&.values.map { |v| "%#{v}%" } ).order("created_at DESC").map { |v| v.as_json.select { |k| filter_params[:response_columns].map { |r| r.to_s }.include?(k) } }
-            else
+            begin
+                render json: policy_scope(Client)
+                        .joins(:user)
+                        .where("users.#{query_params[:q]}::text ILIKE ?", "%#{query_params[:v]}%")
+                        .order("clients.created_at DESC")
+                        .select(flat_client_fields.join(", "))
+                        .paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
+                        .as_json
+
+            rescue ActiveRecord::StatementInvalid => e
                 render json: []
             end
         end
+        
     end
 
     def cases_status_tally
         render json: policy_scope(Case).where(client_id: params[:id]).select("status").map(&:status).tally
     end
 
-    def all_clients
-        render json: Client.select(["name", "id"]).map {|c| {id: c.id, name: c.name }}
-    end
-
     def index
-        render json: Client.all.order("created_at DESC").paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
+        if(params[:response] == "count")
+            render json: { count: policy_scope(Client).count }
+        else
+            render json: policy_scope(Client)
+                    .joins(:user)
+                    .order("clients.created_at DESC")
+                    .select(flat_client_fields.join(", "))
+                    .paginate(page: pagination_params[:page_number], per_page: pagination_params[:page_population])
+                    .as_json
+        end
     end
 
     def show
-        client = find_client
-        authorize client, :view?
-        render json: find_client
+        authorize @client, :show?
+
+        render json: @client.user
     end
     
     def create
-        render json: Client.create!(client_params)
+        authorize Client, :create?
+
+        user = User.create!(client_params)
+        client = Client.create!(user_id: user.id)
+        render json: client
     end
 
     def update
-        client = find_client
-        client.update!(update_client_params)
-        render json: client, status: 200
+        authorize @client, :update?
+
+        @client.user.update!(update_client_params.select { |k| k.to_s != "id" })
+        render json: @client, status: 200
     end
 
     def destroy
-        client = find_client
-        client.destroy
+        authorize @client, :destroy?
+
+        @client.destroy
         head :no_content
     end
 
     def destroy_multiple
+        authorize Client, :destroy_multiple?
+
         Client.destroy(bulk_destruction_ids[:client_ids])
         head :no_content
     end
@@ -86,24 +114,16 @@ class ClientsController < ApplicationController
         params.permit(client_ids: [])
     end
 
-    def find_client
-        policy_scope(Client).find(params[:id])
+    def set_client
+        @client = policy_scope(Client).find(params[:id])
     end
 
     def update_client_params
-        params.permit(:name, :username, :email, :contact_number, :address, :password)
+        params.permit(:id, :name, :username, :email, :contact_number, :address)
     end
 
     def client_params
         params.permit(:id, :name, :username, :email, :contact_number, :address, :password, :password_confirmation)
-    end
-
-    def filter_params
-        params.permit(
-            :criteria,
-            response_columns: [],
-            match_columns: [ :id, :name, :username, :email, :contact_number, :address ]
-        )
     end
 end
 

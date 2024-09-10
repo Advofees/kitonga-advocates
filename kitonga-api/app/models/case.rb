@@ -48,6 +48,6 @@ class Case < ApplicationRecord
     has_many :important_dates, dependent: :destroy
 
     def self.policy_column_names
-        [ :id, :record, :file_reference, :clients_reference, :status ]
+        [ :id, :record, :file_reference, :clients_reference, :status, :client_id ]
     end
 end

@@ -42665,54 +42665,56 @@ case_states = [
   "Closed"
 ]
 
-# Create client role
-puts "Create client role"
-client_role = Role.create!({
-  name: "CLIENT",
-  description: "Clients"
-})
+# # Create client role
+# puts "Create client role"
+# client_role = Role.create!({
+#   name: "CLIENT",
+#   description: "Clients"
+# })
 
-puts "Creating Clients and their cases"
-clients.slice(0, 6).each do |clnt|
-  p_client = {**clnt}
-  p_client.delete(:id)
-  client = Client.create!(p_client)
-  ClientRole.create! client_id: client.id, role_id: client_role.id
-  client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 20)
+# puts "Creating Clients and their cases"
+# clients.slice(0, 6).each do |clnt|
 
-  puts "Seeding #{client.name}'s cases"
-  # puts "Seeding #{clnt[:name]}'s cases"
-  client_cases.each do |casex|
+#   p_client = {**clnt.select { |k| ["name", "username", "email", "contact_number", "address"].include?(k.to_s) }, password: "password"}
 
-    client_case = Case.create!({
-      title: Faker::Lorem.sentence,
-      description: Faker::Lorem.paragraph(sentence_count: 4),
-      case_no_or_parties: casex["case_no_or_parties"],
-      record: casex["record"],
-      file_reference: casex["file_reference"],
-      clients_reference: casex["clients_reference"],
-      status: case_states.sample,
-      client_id: client.id,
-    })
+#   user_client = User.create!(p_client)
 
-    payment_information = PaymentInformation.create!(
-      case_id: client_case.id,
-      payment_type: ["full", "installment"].sample,
-      outstanding: casex["outstanding"],
-      paid_amount: (casex["final_fees"] - casex["outstanding"]),
-      total_fee: casex["final_fees"],
+#   client = Client.create!(user_id: user_client.id)
+#   client_cases = cases.filter { |f| f["user_id"] == clnt[:id] && !f["clients_reference"].strip.empty? && !f["file_reference"].strip.empty? && f["record"] && !f["case_no_or_parties"].strip.empty? }.slice(0, 20)
 
-      deposit_pay: casex["deposit_pay"], 
-      deposit_fees: casex["deposit_fees"], 
-      final_fees: casex["final_fees"], 
-      final_pay: casex["final_pay"], 
-      deposit: casex["deposit"]
-    )
+#   puts "Seeding #{user_client.name}'s cases"
+#   # puts "Seeding #{clnt[:name]}'s cases"
+#   client_cases.each do |casex|
 
-    puts "#{client.name} ------> #{client_case.id}"
-    # puts "#{clnt[:name]} ------> #{casex["id"]}"
-  end
-end
+#     client_case = Case.create!({
+#       title: Faker::Lorem.sentence,
+#       description: Faker::Lorem.paragraph(sentence_count: 4),
+#       case_no_or_parties: casex["case_no_or_parties"],
+#       record: casex["record"],
+#       file_reference: casex["file_reference"],
+#       clients_reference: casex["clients_reference"],
+#       status: case_states.sample,
+#       client_id: client.id,
+#     })
+
+#     payment_information = PaymentInformation.create!(
+#       case_id: client_case.id,
+#       payment_type: ["full", "installment"].sample,
+#       outstanding: casex["outstanding"],
+#       paid_amount: (casex["final_fees"] - casex["outstanding"]),
+#       total_fee: casex["final_fees"],
+
+#       deposit_pay: casex["deposit_pay"], 
+#       deposit_fees: casex["deposit_fees"], 
+#       final_fees: casex["final_fees"], 
+#       final_pay: casex["final_pay"], 
+#       deposit: casex["deposit"]
+#     )
+
+#     puts "#{user_client.name} ------> #{client_case.id}"
+#     # puts "#{clnt[:name]} ------> #{casex["id"]}"
+#   end
+# end
 
 roles = [
   { name: 'Admin', description: 'Administrator with full system access' },
@@ -42775,6 +42777,28 @@ groups = [
   { name: 'Lobbying Team', description: 'Engages in legal advocacy and lobbying' }
 ]
 
+actions = [
+  "AddParty",
+  "AddInstallment",
+  "InitializePaymentInformation",
+  "ViewPaymentInformation",
+  "UpdatePaymentInformation",
+  "ViewDocuments",
+  "ViewHearings",
+  "ViewImportantDates",
+  "ViewTasks",
+  "ViewParties",
+  "CreateCase",
+  "ViewCase",
+  "DestroyCase",
+  "UpdateCase",
+]
+
+puts "Creating Actions"
+actions.each do |action|
+  ResourceAction.create(name: action)
+end
+
 puts "Creating Superuser"
 admin = User.create!({
     username: 'admin',
@@ -42789,7 +42813,7 @@ admin = User.create!({
 puts "Create admin role"
 admin_role = Role.create!({
   name: "ADMIN",
-  description: "Super users"
+  description: "Administrator"
 })
 
 # Assign ADMIN Privileges to above admin

@@ -9,22 +9,33 @@ Rails.application.routes.draw do
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
-  resources :client_groups
-  resources :client_roles
+  # resources :client_groups
+  # resources :client_roles
   # Defines the root path route ("/")
   root "application#welcome"
   get "jsonb", to: "application#index"
+
+  get "test", to: "clients#test"
   
   scope "api" do
     scope "v1" do
       get "/current/user", to: "sessions#profile"
-
-      get "test/search", to: "sessions#test_qs"
       
       scope "authorization" do
+        resources :roles
+        get "/roles/stats/count", to: "roles#count"
+        resources :groups
+        get "/groups/stats/count", to: "groups#count"
+        get "/groups/:id/users", to: "groups#show_users"
+        get "/groups/:id/roles", to: "groups#show_roles"
+        post "/groups/:id/roles/remove", to: "groups#remove_roles"
+        post "/groups/:id/roles/add", to: "groups#add_roles"
+        post "/groups/:id/users/remove", to: "groups#remove_users"
+        post "/groups/:id/users/add", to: "groups#add_users"
+
         resources :access_policies
         get "/access_policies/stats/count", to: "access_policies#count"
-        get "search/access_policies", to: "access_policies#search"
+        get "/search/access_policies", to: "access_policies#search"
 
         scope "policy_search" do
           get ":resource", to: "access_policies#search_resources"
@@ -47,10 +58,8 @@ Rails.application.routes.draw do
       end
 
       scope "pages" do
-        get "/cases/:page_number/:page_population", to: "cases#index" #v1
-        get "/cases", to: "cases#index" #v2
-        get "/clients/:page_number/:page_population", to: "clients#index" #v1
-        get "/clients", to: "clients#index" #v2
+        get "/cases", to: "cases#index"
+        get "/clients", to: "clients#index"
       end
 
       scope 'dashboard' do
@@ -62,80 +71,52 @@ Rails.application.routes.draw do
       end
 
       scope "search" do
-        get "/cases/:q/:v/:page_number/:page_population", to: "cases#search_cases" #v1
-        get "/cases", to: "cases#search_cases" #v2
-        get "/clients/:q/:v/:page_number/:page_population", to: "clients#search_clients" #v1
-        get "/clients", to: "clients#search_clients" #v2
-      end
-
-      scope "filter_pages" do
-        post "/cases/:criteria/:response/:page_number/:page_population", to: "cases#filter"
-        post "/cases/:criteria/:response", to: "cases#filter"
+        get "/cases", to: "cases#search_cases"
+        get "/clients", to: "clients#search"
       end
 
       scope "filter" do
         post "cases", to: "cases#filter"
         post "range/cases", to: "cases#range_filter"
-
-        post "/cases/:criteria", to: "cases#filter"
-        post "/clients/:criteria", to: "clients#filter"
-        post "/filter/cases/count/:q/:v", to: "cases#filter"
-        post "/range/cases/:response", to: "cases#range_filter"
-        post "/range/cases/:client_id/:response/:page_number/:page_population", to: "cases#range_filter" #v1
-        # post "/range/cases/:client_id/:response/:page_number/:page_population", to: "cases#range_filter" #v2
-        post "/range/cases/:client_id/:response", to: "cases#range_filter"
       end
 
       scope "cases" do
         get "/:id", to: "cases#show"
         delete "/:id", to: "cases#destroy"
-        delete "/destroy/multiple", to: "cases#destroy_multiple"
         get "/:id/payment_information", to: "cases#payment_information"
         patch "/:id/payment_information", to: "cases#update_network_payment_information"
-        get "/:id/documents", to: "cases#case_documents"
-        get "/:id/hearings", to: "cases#hearings"
-        get "/:id/important_dates", to: "cases#important_dates"
-        get "/:id/tasks", to: "cases#tasks"
-        get "/:id/parties", to: "cases#parties"
         post "/new", to: "cases#create"
         patch "/:id/update", to: "cases#update"
         post "/:id/initialize_payment_information", to: "cases#create_payment_information"
         post "/:id/add_installment", to: "cases#add_installment"
-        post "/:id/add_party", to: "cases#add_party"
-      end
-
-      scope "clients" do
-        get "/all", to: "clients#all_clients"
-        post "/new", to: "clients#create"
-        patch "/:id/update", to: "clients#update"
-        get "/:id/get", to: "clients#show"
-        delete "/:id/delete", to: "clients#destroy"
-        delete "/destroy/multiple", to: "clients#destroy_multiple"
       end
 
       scope "iam" do
-        get "brief", to: "users#brief_users"
         resources :users
+        resources :clients
+        get "/search/users", to: "users#search"
+        get "/search/clients", to: "clients#search"
+        get "/search/all_clients", to: "clients#search_all_clients"
       end
 
-      scope "parties" do
-        get "/:id", to: "parties#show"
-        patch "/:id", to: "parties#update"
-        delete "/:id", to: "parties#destroy"
-      end
+      # scope "parties" do
+      #   get "/:id", to: "parties#show"
+      #   patch "/:id", to: "parties#update"
+      #   delete "/:id", to: "parties#destroy"
+      # end
 
-      scope "payments" do
-        get "/:id", to: "payments#show"
-        patch "/:id", to: "payments#update"
-        delete "/:id", to: "payments#destroy"
-      end
+      # scope "payments" do
+      #   get "/:id", to: "payments#show"
+      #   patch "/:id", to: "payments#update"
+      #   delete "/:id", to: "payments#destroy"
+      # end
 
       # Login
       post "/auth/access-token", to: "sessions#login"
 
       # Serve file attachments
-      get "/media/case_document/:id/download", to: "case_documents#serve_case_document"
-      get "/media/payment/:id/download", to: "payments#serve_receipt"
+      # get "/media/case_document/:id/download", to: "case_documents#serve_case_document"
+      # get "/media/payment/:id/download", to: "payments#serve_receipt"
     end
   end
 end

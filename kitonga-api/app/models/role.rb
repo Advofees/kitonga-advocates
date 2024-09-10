@@ -1,5 +1,9 @@
 class Role < ApplicationRecord
 
+    validates :name, presence: true, uniqueness: true
+    validate :name_taken?
+    validate :check_spaces
+
     has_many :user_roles
     has_many :users, through: :user_roles
     
@@ -15,6 +19,18 @@ class Role < ApplicationRecord
     private
 
     def uppercase_name
-        self.name = ["ROLE", *name.upcase.split(/\s+/)].join("_")
+        self.name = prefixed_name
+    end
+
+    def prefixed_name
+        ["ROLE", *name.upcase.split(/\s+/)].join("_")
+    end
+
+    def check_spaces
+        errors.add(:name, "can't contain spaces") if name&.match?(/\s+/)
+    end
+
+    def name_taken?
+        errors.add(:name, "name #{prefixed_name} already taken") if Role.exists?(name: prefixed_name)
     end
 end

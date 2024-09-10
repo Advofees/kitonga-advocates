@@ -28,4 +28,17 @@ class User < ApplicationRecord
     def self.policy_column_names
         [ :id, :username, :email ]
     end
+
+    def authorities
+        [ *roles.map(&:name), *groups.map(&:name), *groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq
+    end
+
+    def auth_identifiers
+        [
+            resource_identifiers,
+            roles.map(&:resource_identifiers),
+            groups.map(&:resource_identifiers),
+            groups.map { |grp| grp.roles.map(&:resource_identifiers) }
+    ].flatten.uniq
+    end
 end

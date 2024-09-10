@@ -188,17 +188,18 @@ class CasesController < ApplicationController
   end
 
   def show
-    # authorize @casex, :view?
+    authorize @casex, :view?
     render json: @casex
   end
 
   def create
-    # authorize Case
+    authorize Case, :create?
     cs = Case.create!(case_params)
     render json: cs, status: :created
   end
 
   def add_party
+    authorize @casex, :add_party?
     # Clone party parameters
     pars = party_params
 
@@ -214,7 +215,7 @@ class CasesController < ApplicationController
   end
 
   def add_installment
-    # authorize @casex, :update?
+    authorize @casex, :add_installment?
     if @casex.payment_information
       payment_information = @casex.payment_information
       installment = Payment.create!({
@@ -233,7 +234,7 @@ class CasesController < ApplicationController
   end
 
   def create_payment_information
-    # authorize @casex, :update?
+    authorize @casex, :initialize_payment_information?
 
     if @casex.payment_information
       render json: { message: "Payment Information Exists. Consider performing an update" }, status: 409
@@ -286,15 +287,21 @@ class CasesController < ApplicationController
   end
 
   def update
+    authorize @casex, :update?
     @casex.update!(update_case_params)
     render json: @casex, status: :accepted
   end
 
   def payment_information
+    authorize @casex, :view_payment_information?
+
     render json: @casex.payment_information
   end
 
   def update_network_payment_information
+
+    authorize @casex, :update_payment_information?
+
     pay_info = @casex.payment_information
     
     raise CustomException.new("Payment not yet initialized for this Case", 404) unless pay_info
@@ -304,27 +311,40 @@ class CasesController < ApplicationController
   end
 
   def case_documents
+
+    authorize @casex, :view_documents?
+
     render json: @casex.case_documents
   end
 
   def hearings
+    authorize @casex, :view_hearings?
+
     render json: @casex.hearings
   end
 
   def important_dates
+    authorize @casex, :view_important_dates?
+
     render json: @casex.important_dates
   end
 
   def tasks
+    authorize @casex, :view_tasks?
+
     render json: @casex.tasks
   end
 
   def parties
+
+    authorize @casex, :view_parties?
+
     render json: @casex.parties
   end
 
   def destroy
-    # authorize @casex, :destroy?
+    authorize @casex, :destroy?
+    
     @casex.destroy
     head :no_content
   end

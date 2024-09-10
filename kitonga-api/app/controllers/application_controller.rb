@@ -1,66 +1,20 @@
-# require 'base64'
-
 class ApplicationController < ActionController::API
 
     include Pundit::Authorization
     include ActionController::Cookies
     
     wrap_parameters format: []
-    # include ActionController::Cookies
     rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
     rescue_from ResourceNotFoundException, with: :resource_not_found_response
     rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity_response
-    # rescue_from Mongoid::Errors::Validations, with: :unprocessable_mongoid_entity_response
     rescue_from ForbiddenAccessException, with: :forbidden_access_response
     rescue_from SessionExpiredException, with: :session_expired_response
     rescue_from UnauthorizedAccessException, with: :unauthorized_access_response
     rescue_from CustomException, with: :custom_exception_response
     rescue_from Pundit::NotAuthorizedError, with: :policy_violation_response
 
-    # rescue_from Mongoid::Errors::DocumentNotFound, with: :document_not_found_response
-
     before_action :authenticate
-    skip_before_action :authenticate, only: [:welcome, :index]
-
-    # def repeat_string(str, n = 1)
-    #     (0...n).to_a.map { str }
-    # end
-
-    # def wrap_with_modulus(elements)
-    #     elements.map { |str| "%#{str}%" }
-    # end
-
-    def index
-        render json: {"index" => "index"}
-    end
-        
-    #     resource_where_tokens = ["2525"]
-    #     principal_where_tokens = ["ROLE_ADMIN"]
-    #     action_where_tokens = ["306-"]
-
-    #     policies = AccessPolicy
-    #                 .select("DISTINCT access_policies.*")
-    #                 .where("EXISTS (
-    #                             SELECT 1
-    #                             FROM jsonb_array_elements(resources) AS elem
-    #                             WHERE #{repeat_string("elem::text ILIKE ?", resource_where_tokens.length).join(" OR ")}
-    #                         )
-    #                         AND EXISTS (
-    #                             SELECT 1
-    #                             FROM jsonb_array_elements(principals) AS elem
-    #                             WHERE #{repeat_string("elem::text ILIKE ?", principal_where_tokens.length).join(" OR ")}
-    #                         )
-    #                         AND EXISTS (
-    #                             SELECT 1
-    #                             FROM jsonb_array_elements(actions) AS elem
-    #                             WHERE #{repeat_string("elem::text ILIKE ?", action_where_tokens.length).join(" OR ")}
-    #                         )", 
-    #                         *wrap_with_modulus(resource_where_tokens),
-    #                         *wrap_with_modulus(principal_where_tokens),
-    #                         *wrap_with_modulus(action_where_tokens)
-    #                     )
-    #     render json: { "policies" => policies }
-    # end
+    skip_before_action :authenticate, only: [:welcome]
 
     def welcome
         render json: { "Advokit" => "Advocacy and Case Management Suite" }
@@ -89,26 +43,14 @@ class ApplicationController < ActionController::API
 
             payload = decoded_token.first
 
-            if payload['grant_type'] == 'user'
-                user = User.find(payload['id'])
-                unless !user
-                    @auth_context = AuthContext.new(
-                        user.as_json(only: [:username, :id, :name, :email ]),
-                        "user",
-                        [ user.roles.map(&:name), user.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq,
-                        [ user.resource_identifiers, user.roles.map(&:resource_identifiers), user.groups.map(&:resource_identifiers) ].flatten
-                    )
-                end
-            elsif payload['grant_type'] == 'client'
-                client = Client.find(payload['id'])
-                unless !client
-                    @auth_context = AuthContext.new(
-                        client.as_json(only: [:username, :id, :name, :email ]),
-                        "client",
-                        [ client.roles.map(&:name), client.groups.map { |grp| grp.roles.map(&:name) } ].flatten.uniq,
-                        [ client.resource_identifiers , client.roles.map(&:resource_identifiers), client.groups.map(&:resource_identifiers) ].flatten
-                    )
-                end
+            user = User.find(payload['id'])
+
+            unless !user
+                @auth_context = AuthContext.new(
+                    user.as_json(only: [:username, :id, :name, :email ]),
+                    user.authorities,
+                    user.auth_identifiers
+                )
             end
         end
     end
@@ -162,10 +104,6 @@ class ApplicationController < ActionController::API
         render json: { error: "#{controller_name.classify} not found", status: "RESOURCE NOT FOUND" }, status: :not_found
     end
 
-    # def document_not_found_response(exception)
-    #     render json: { error: "Document not found"}, status: :not_found
-    # end
-
     def resource_not_found_response(exception)
         render json: { status: "RESOURCE NOT FOUND", error: exception.message }, status: :not_found
     end
@@ -173,10 +111,6 @@ class ApplicationController < ActionController::API
     def unprocessable_entity_response(invalid)
         render json: { errors: invalid.record.errors, status: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
     end
-
-    # def unprocessable_mongoid_entity_response(invalid)
-    #     render json: { errors: invalid.record.errors, message: "UNPROCESSABLE ENTITY" }, status: :unprocessable_entity
-    # end
 
     def forbidden_access_response(exception)
         render json: { status: "FORBIDDEN ACCESS", error: exception.message }, status: :forbidden
