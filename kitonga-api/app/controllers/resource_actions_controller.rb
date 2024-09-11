@@ -47,6 +47,6 @@ class ResourceActionsController < ApplicationController
   end
   
   def resource_action_params
-    params.permit(:name)
+    params.permit(:name, :description)
   end
 end

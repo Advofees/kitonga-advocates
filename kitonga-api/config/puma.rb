@@ -31,3 +31,8 @@ plugin :tmp_restart
 
 # Only use a pidfile when requested
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
+
+# ssl_bind '0.0.0.0', '3001', {
+#   key: "#{Rails.root}/config/ssl/localhost.key",
+#   cert: "#{Rails.root}/config/ssl/localhost.crt"
+# }

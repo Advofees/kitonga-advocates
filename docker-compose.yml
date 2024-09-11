@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  kitonga-api:
+    build:
+      dockerfile: Dockerfile
+      context: kitonga-api
+    ports:
+      - "4000:3000"
+    environment:
+      - RAILS_ENV=development
+      - RAILS_MASTER_KEY=3adfd4e39685b8726d7a5dd35852e708
+      - PG_DATABASE_URL=postgres://advoc:advoc@postgres-db:5432/advoc
+    depends_on:
+      - postgres-db
+    networks:
+      - advoc_network
+  
+  kitonga-web:
+    build:
+      dockerfile: Dockerfile
+      context: kitonga-web
+    ports:
+      - "80:80"
+    depends_on:
+      - kitonga-api
+    networks:
+      - advoc_network
+    
+  postgres-db:
+    build:
+      dockerfile: Dockerfile
+      context: devcontainers/postgresql
+    container_name: postgres_advoc_db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=advoc
+      - POSTGRES_USER=advoc
+      - POSTGRES_PASSWORD=advoc
+    volumes:
+      - postgresql-data:/var/lib
+    networks:
+      - advoc_network
+
+networks:
+  advoc_network: {}
+
+volumes:
+  postgresql-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./devcontainers/data/postgresql

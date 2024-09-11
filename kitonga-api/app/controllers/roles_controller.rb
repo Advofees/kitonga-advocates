@@ -43,6 +43,6 @@ class RolesController < ApplicationController
     end
 
     def update_role_params
-        params.permit(:name)
+        params.permit(:name, :description)
     end
 end

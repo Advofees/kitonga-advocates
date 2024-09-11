@@ -117,7 +117,7 @@ class GroupsController < ApplicationController
     end
 
     def update_group_params
-        params.permit(:name)
+        params.permit(:name, :description)
     end
 
     def modify_roles_users_params

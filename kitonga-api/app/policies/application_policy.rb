@@ -70,6 +70,8 @@ class ApplicationPolicy
           raise ResourceNotFoundException.new("The action #{desired_action} your are trying to perform is not registered.")
         end
 
+        return true if is_admin?
+
         resource_where_tokens = @record.resource_identifiers
 
         action_where_tokens = action.resource_identifiers

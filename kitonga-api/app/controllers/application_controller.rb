@@ -130,7 +130,7 @@ class ApplicationController < ActionController::API
         else
             error = "You are not authorized to perform this action."
         end
-        render json: { "status": "POLICY VIOLATION", error: error }, status: 403
+        render json: { "status": "FORBIDDEN ACCESS", error: error }, status: 403
     end
 
     def custom_exception_response(exception)

@@ -32,5 +32,5 @@
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 
-# Deveopment database volumes
-/dev-database/data
+# Local certificates
+/config/ssl
